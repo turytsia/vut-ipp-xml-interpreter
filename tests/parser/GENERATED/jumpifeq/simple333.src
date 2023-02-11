@@ -1,0 +1,2 @@
+.IPPcode23
+JUMPIFEQ bool@true GF@var nil@nil

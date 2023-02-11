@@ -1,0 +1,2 @@
+.IPPcode23
+JUMPIFEQ GF@var label int@42

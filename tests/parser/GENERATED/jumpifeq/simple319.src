@@ -1,0 +1,2 @@
+.IPPcode23
+JUMPIFEQ bool@true nil@nil string@a
