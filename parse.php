@@ -29,64 +29,48 @@ class ErrorHandler
 }
 
 const INSTRUCTION_RULES = [
-    "MOVE" => "VAR SYMB",
-    "CREATEFRAME" => "",
-    "PUSHFRAME" => "",
-    "POPFRAME" => "",
-    "DEFVAR" => "VAR",
-    "CALL" => "LABEL",
-    "RETURN" => "",
+    "move" => "VAR SYMB",
+    "createframe" => "",
+    "pushframe" => "",
+    "popframe" => "",
+    "defvar" => "VAR",
+    "call" => "LABEL",
+    "return" => "",
 
-    "PUSHS" => "SYMB",
-    "POPS" => "VAR",
-    "ADD" => "VAR SYMB SYMB",
-    "SUB" => "VAR SYMB SYMB",
-    "MUL" => "VAR SYMB SYMB",
-    "IDIV" => "VAR SYMB SYMB",
-    "LT" => "VAR SYMB SYMB",
-    "GT" => "VAR SYMB SYMB",
-    "EQ" => "VAR SYMB SYMB",
-    "AND" => "VAR SYMB SYMB",
-    "OR" => "VAR SYMB SYMB",
-    "NOT" => "VAR SYMB SYMB",
-    "INT2CHAR" => "VAR SYMB",
-    "STRI2INT" => "VAR SYMB SYMB",
+    "pushs" => "SYMB",
+    "pops" => "VAR",
+    "add" => "VAR SYMB SYMB",
+    "sub" => "VAR SYMB SYMB",
+    "mul" => "VAR SYMB SYMB",
+    "idiv" => "VAR SYMB SYMB",
+    "lt" => "VAR SYMB SYMB",
+    "gt" => "VAR SYMB SYMB",
+    "eq" => "VAR SYMB SYMB",
+    "and" => "VAR SYMB SYMB",
+    "or" => "VAR SYMB SYMB",
+    "not" => "VAR SYMB",
+    "int2char" => "VAR SYMB",
+    "stri2int" => "VAR SYMB SYMB",
 
-    "READ" => "VAR TYPE",
-    "WRITE" => "SYMB",
+    "read" => "VAR TYPE",
+    "write" => "SYMB",
 
-    "CONCAT" => "VAR SYMB SYMB",
-    "STRLEN" => "VAR SYMB",
-    "GETCHAR" => "VAR SYMB SYMB",
-    "SETCHAR" => "VAR SYMB SYMB",
+    "concat" => "VAR SYMB SYMB",
+    "strlen" => "VAR SYMB",
+    "getchar" => "VAR SYMB SYMB",
+    "setchar" => "VAR SYMB SYMB",
 
-    "TYPE" => "VAR SYMB",
+    "type" => "VAR SYMB",
 
-    "LABEL" => "LABEL",
-    "JUMP" => "LABEL",
-    "JUMPIFEQ" => "LABEL SYMB SYMB",
-    "JUNPIFNEQ" => "LABEL SYMB SYMB",
-    "EXIT" => "SYMB",
+    "label" => "LABEL",
+    "jump" => "LABEL",
+    "jumpifeq" => "LABEL SYMB SYMB",
+    "jumpifneq" => "LABEL SYMB SYMB",
+    "exit" => "SYMB",
 
-    "DPRINT" => "SYMB",
-    "BREAK" => "",
+    "dprint" => "SYMB",
+    "break" => "",
 ];
-
-// TODO rewrite parameters handler into OOP. Create ENUM tuple with flags
-$shortopts = "h";
-
-$longopts = [
-    "help"
-];
-
-$options = getopt($shortopts, $longopts);
-
-if (isset($options["help"])) {
-    if ($argc > 2) ErrorHandler::exit_with_error(ErrorCodes::ERR_PARAMETER, "use just \"--help\"");
-
-    echo "Here should be info...\n";
-    exit(ErrorCodes::EXIT_SUCCESS->value);
-}
 
 class InputReader
 {
@@ -165,13 +149,14 @@ class Validators
 
         switch ($type) {
             case "int":
-                return preg_match("/^-?\d+$/", $literal, $match);
+                return preg_match("/^[+\-]?\d+$/", $literal);
             case "bool":
-                return preg_match("/^(true|false)$/", $literal, $match);
+                return preg_match("/^(true|false)$/", $literal);
             case "nil":
-                return preg_match("/^nil$/", $literal, $match);
+                return preg_match("/^nil$/", $literal);
             case "string":
-                return !preg_match("/^.*\\\\(\d\d\D|\d\D|\D]).*$/", $literal, $match);
+                return !preg_match("/^.*\\\\(\d\d\D|\d\D\D|\D\D\D).*$/", $literal) &&
+                    !preg_match("/^.*\\\\(\d\d\D|\d\D\D|\D\D\D)?$/", $literal);
         }
         return true;
     }
@@ -179,12 +164,41 @@ class Validators
 
     public static function verify_type($type)
     {
-        return preg_match("/(int|bool|string|nil)/", $type, $match);
+        return preg_match("/^(int|bool|string|nil)$/", $type, $match);
     }
 
     public static function verify_label($label)
     {
         return preg_match("/^[a-zA-Z_\-$&%*!?][\w\-$&%*!?]*$/", $label, $match);
+    }
+}
+
+class Operand
+{
+    public $type;
+    public $value;
+    public function __construct($operand, $type)
+    {
+        switch ($type) {
+            case "SYMB":
+                if (!Validators::verify_var($operand)) {
+                    [$this->type, $this->value] = explode("@", $operand);
+                    break;
+                }
+            case "VAR":
+                $this->type = "var";
+                $this->value = $operand;
+                break;
+            case "LABEL":
+                $this->type = "label";
+                $this->value = $operand;
+            case "TYPE":
+                $this->type = "type";
+                $this->value = $operand;
+                break;
+            default:
+                ErrorHandler::exit_with_error(ErrorCodes::ERR_INTERNAL, "undefined operand's type");
+        }
     }
 }
 
@@ -197,37 +211,44 @@ class Instruction
 
     public function __construct($line)
     {
-        if (!isset(INSTRUCTION_RULES[$line[0]]))
-            ErrorHandler::exit_with_error(ErrorCodes::ERR_SRC_CODE, "instruction does not exist");
-        $rule = INSTRUCTION_RULES[$line[0]];
+        $this->name = strtolower(array_shift($line));
 
-        $this->name = array_shift($line);
+        if (!isset(INSTRUCTION_RULES[$this->name]))
+            ErrorHandler::exit_with_error(ErrorCodes::ERR_SRC_CODE, "instruction $line[0] does not exist");
 
-        foreach (explode(" ", $rule) as $key => $operand) {
+
+        $rule = explode(" ", INSTRUCTION_RULES[$this->name]);
+
+        if ($rule[0] === "")
+            array_pop($rule);
+        if (count($line) !== count($rule))
+            ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "Invalid number of operands");
+
+        foreach ($rule as $key => $operand) {
             switch ($operand) {
                 case "VAR":
                     if (Validators::verify_var($line[$key])) break;
-                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "var");
+                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "Expected variable");
                 case "SYMB":
                     if (Validators::verify_symb($line[$key])) break;
-                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "symb");
+                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "Expected constant");
                 case "TYPE":
                     if (Validators::verify_type($line[$key])) break;
-                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "type");
+                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "Expected type");
                 case "LABEL":
                     if (Validators::verify_label($line[$key])) break;
-                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "label");
+                    ErrorHandler::exit_with_error(ErrorCodes::ERR_SYNTAX, "Expected label");
                 default:
-                    ErrorHandler::exit_with_error(ErrorCodes::ERR_INTERNAL, "unknown operand type");
+                    continue 2;
             }
-            array_push($this->operands, $line[$key]);
+            array_push($this->operands, new Operand($line[$key], $operand));
         }
         self::$order++;
     }
 
     public function get_name()
     {
-        return $this->name;
+        return strtoupper($this->name);
     }
 
     public function get_operands()
@@ -248,7 +269,7 @@ class InputAnalyzer
         $generator = new XMLGenerator();
 
         foreach ($input as $line) {
-            $generator->generateInstruction(new Instruction(explode(" ", $line)));
+            $generator->generateInstruction(new Instruction(preg_split("/\s+/", $line)));
         }
 
         echo $generator;
@@ -275,12 +296,10 @@ class XMLGenerator
         $instruction_template->setAttribute("order", Instruction::$order);
         $instruction_template->setAttribute("opcode", $instruction->get_name());
 
-        $operands = explode(" ", INSTRUCTION_RULES[$instruction->get_name()]);
-
         foreach ($instruction->get_operands() as $key => $operand) {
             $operand_template = $this->output->createElement("arg" . ($key + 1));
-            $operand_template->setAttribute("type", strtolower($operands[$key]));
-            $operand_template->nodeValue = $operand;
+            $operand_template->setAttribute("type", strtolower($operand->type));
+            $operand_template->nodeValue = $operand->value;
             $instruction_template->appendChild($operand_template);
         }
         $this->program->appendChild($instruction_template);
@@ -292,6 +311,23 @@ class XMLGenerator
 
         return $this->output->saveXML();
     }
+}
+
+// TODO rewrite parameters handler into OOP. Create ENUM tuple with flags
+$shortopts = "h";
+
+$longopts = [
+    "help"
+];
+
+$options = getopt($shortopts, $longopts);
+
+if (isset($options["help"])) {
+    if ($argc > 2)
+        ErrorHandler::exit_with_error(ErrorCodes::ERR_PARAMETER, "You can't combine other flags with' \"--help\"");
+
+    echo "Here should be info...\n";
+    exit(ErrorCodes::EXIT_SUCCESS->value);
 }
 
 $reader = new InputReader();

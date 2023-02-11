@@ -1,0 +1,2 @@
+.IPPcode23
+EQ bool@true int@42 nil@nil

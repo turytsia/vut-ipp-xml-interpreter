@@ -1,0 +1,2 @@
+.IPPcode23
+ADD bool@true string@a int@42

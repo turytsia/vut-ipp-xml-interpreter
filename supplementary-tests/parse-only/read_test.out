@@ -8,8 +8,7 @@
         <arg2 type="type">int</arg2>
     </instruction>
     <instruction order="3" opcode="WRITE">
-        <arg1 type="var">
-            GF@a</arg1>
+        <arg1 type="var">GF@a</arg1>
     </instruction>
     <instruction order="4" opcode="WRITE">
         <arg1 type="string">\032&lt;not-tag/&gt;\032</arg1>
@@ -29,12 +28,12 @@
         <arg2 type="type">int</arg2>
     </instruction>
     <instruction order="3" opcode="WRITE">
-        <arg1 type="symb">GF@a</arg1>
+        <arg1 type="var">GF@a</arg1>
     </instruction>
     <instruction order="4" opcode="WRITE">
-        <arg1 type="symb">string@\032&lt;not-tag/&gt;\032</arg1>
+        <arg1 type="string">\032&lt;not-tag/&gt;\032</arg1>
     </instruction>
     <instruction order="5" opcode="WRITE">
-        <arg1 type="symb">bool@true</arg1>
+        <arg1 type="bool">true</arg1>
     </instruction>
 </program>
