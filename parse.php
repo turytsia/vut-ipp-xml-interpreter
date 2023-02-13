@@ -312,7 +312,7 @@ class XMLGenerator
         return $this->output->saveXML();
     }
 }
-
+//TODO Remove tests from git
 // TODO rewrite parameters handler into OOP. Create ENUM tuple with flags
 $shortopts = "h";
 

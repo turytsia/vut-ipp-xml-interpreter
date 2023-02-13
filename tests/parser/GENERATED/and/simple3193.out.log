@@ -1,8 +1,0 @@
-[Fatal Error] simple3193.my_out:6:7:The element type "program" must be terminated by the matching end-tag "</program>".
-org.xml.sax.SAXParseException; systemId: file:///home/michal-lm/Documents/IPPprojekt/ipp-2022-tests/parse-only/GENERATED/and/simple3193.my_out; lineNumber: 6; columnNumber: 7; The element type "program" must be terminated by the matching end-tag "</program>".
-	at java.xml/com.sun.org.apache.xerces.internal.parsers.AbstractSAXParser.parse(AbstractSAXParser.java:1243)
-	at java.xml/com.sun.org.apache.xerces.internal.jaxp.SAXParserImpl$JAXPSAXParser.parse(SAXParserImpl.java:635)
-	at com.a7soft.examxml.ExamXMLHandler.loadXML(ExamXMLHandler.java:111)
-	at com.a7soft.examxml.ExamXML.loadXML(ExamXML.java:247)
-	at com.a7soft.examxml.ExamXML.compare(ExamXML.java:213)
-	at com.a7soft.examxml.ExamXML.main(ExamXML.java:383)

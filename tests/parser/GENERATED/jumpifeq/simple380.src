@@ -1,2 +1,0 @@
-.IPPcode23
-JUMPIFEQ int@42 string@a int@42

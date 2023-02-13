@@ -1,2 +1,0 @@
-.IPPcode23
-JUMPIFNEQ string@a int@42 bool@true
