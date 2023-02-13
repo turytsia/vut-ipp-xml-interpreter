@@ -26,6 +26,25 @@ enum ErrorCodes: int
     case EXIT_SUCCESS = 0; //OK
 }
 
+enum OptionTypes : string {
+    case LOC = "loc";
+    case COMMENTS = "comments";
+    case LABELS = "labels";
+    case JUMPS = "jumps";
+    case FWJUMPS = "fwjumps";
+    case BACKJUMPS = "backjumps";
+    case FREQUENT = "frequent";
+    case PRINT = "print";
+    case EOLS = "eols";
+}
+
+class StatsEntity {
+    public function __construct(array $options)
+    {
+        
+    }
+}
+
 class Stats {
     
     static private $order = 1;
