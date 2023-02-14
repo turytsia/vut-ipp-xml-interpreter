@@ -26,7 +26,9 @@ enum ErrorCodes: int
     case EXIT_SUCCESS = 0; //OK
 }
 
-enum OptionTypes : string {
+enum OptionTypes: string
+{
+    case ORDER = "order";
     case LOC = "loc";
     case COMMENTS = "comments";
     case LABELS = "labels";
@@ -37,26 +39,38 @@ enum OptionTypes : string {
     case PRINT = "print";
     case EOLS = "eols";
 }
+class Stats
+{
+    private static $stats;
 
-class StatsEntity {
-    public function __construct(array $options)
+    public function __construct()
     {
-        
-    }
-}
-
-class Stats {
-    
-    static private $order = 1;
-
-    protected function increase_order(){
-        self::$order++;
+        self::$stats = array_fill_keys(
+            array_column(OptionTypes::cases(), 'value'),
+            0
+        );
     }
 
-    protected function get_order(){
-        return self::$order;
+    public static function set_stats(OptionTypes $type)
+    {
+        self::$stats[$type->value]++;
     }
 
+    public static function get_stats(OptionTypes $type)
+    {
+        return self::$stats[$type->value];
+    }
+
+
+    // static private $comments = 0;//TODO
+    // static private $label = 0;//TODO
+    // static private $jumps = 0;//TODO
+    // static private $fwjumps = 0;//TODO
+    // static private $backjumps = 0;//TODO
+
+    // static private $frequent = [];//TODO
+    // static private $eols = false;//TODO
+    // static private $print = NULL;//TODO
 }
 
 class ErrorHandler
@@ -119,24 +133,26 @@ class Validators
     }
 }
 
-class InstructionRule {
+class InstructionRule
+{
     private array $operands;
     public function __construct(...$operand_types)
     {
         $this->operands = [];
-        foreach($operand_types as $type){
+        foreach ($operand_types as $type) {
             array_push($this->operands, $type);
         }
     }
 
-    public function get_operands(){
+    public function get_operands()
+    {
         return $this->operands;
     }
 
-    public function has_no_operands(){
+    public function has_no_operands()
+    {
         return !!count($this->operands);
     }
-
 }
 
 const INSTRUCTION_RULES = [
@@ -175,7 +191,7 @@ const INSTRUCTION_RULES = [
 
     "label" => new InstructionRule(OperandTypes::LABEL),
     "jump" => new InstructionRule(OperandTypes::LABEL),
-    "jumpifeq" => new InstructionRule(OperandTypes::LABEL,OperandTypes::SYMB, OperandTypes::SYMB),
+    "jumpifeq" => new InstructionRule(OperandTypes::LABEL, OperandTypes::SYMB, OperandTypes::SYMB),
     "jumpifneq" => new InstructionRule(OperandTypes::LABEL, OperandTypes::SYMB, OperandTypes::SYMB),
     "exit" => new InstructionRule(OperandTypes::SYMB),
 
@@ -183,10 +199,11 @@ const INSTRUCTION_RULES = [
     "break" => new InstructionRule(),
 ];
 
-class Formatter {
+class Formatter
+{
     protected function format_line($line)
     {
-        if (gettype($line) !== "string") 
+        if (gettype($line) !== "string")
             return false;
 
         $line = $this->remove_ending($line);
@@ -211,7 +228,7 @@ class Formatter {
 
     private function remove_empty($line)
     {
-        if (!preg_match("/^\S+/", $line, $match)) 
+        if (!preg_match("/^\S+/", $line, $match))
             return NULL;
 
         return $line;
@@ -231,6 +248,7 @@ class InputReader extends Formatter
         while (($line = $this->format_line(fgets(STDIN))) !== false) {
             if ($line === NULL) continue;
 
+            // Stats::set_stats(OptionTypes::LOC);
             array_push($this->input, $line);
         }
 
@@ -244,7 +262,7 @@ class Operand
     public $value;
     public function __construct(string $operand, OperandTypes $type)
     {
-        switch($type){
+        switch ($type) {
             case OperandTypes::SYMB:
                 if (!Validators::verify_var($operand)) {
                     [$this->type, $this->value] = explode("@", $operand);
@@ -259,15 +277,17 @@ class Operand
     }
 }
 
-class Instruction extends Stats
+class Instruction
 {
     private $name;
     private $order;
     private $operands;
 
+    private static $general_order = 1;
+
     public function __construct($line)
     {
-        
+
         $this->name = strtolower(array_shift($line));
         $this->operands = [];
 
@@ -299,8 +319,8 @@ class Instruction extends Stats
             }
             array_push($this->operands, new Operand($line[$key], $operand));
         }
-        $this->order = parent::get_order();
-        parent::increase_order();
+
+        $this->order = self::$general_order++;
     }
 
     public function get_name()
@@ -313,7 +333,8 @@ class Instruction extends Stats
         return $this->operands;
     }
 
-    public function get_order(){
+    public function get_order()
+    {
         return $this->order;
     }
 }
@@ -329,20 +350,19 @@ class InputAnalyzer
         $this->instructions = [];
     }
 
-    public function get_instructions(){
+    public function get_instructions()
+    {
         if (!Validators::verify_header($this->input[0]))
             ErrorHandler::exit_with_error(ErrorCodes::ERR_HEADER, "invalid header");
-        
+
         array_shift($this->input);
 
-        foreach($this->input as $line){
+        foreach ($this->input as $line) {
             array_push($this->instructions, new Instruction(preg_split("/\s+/", $line)));
         }
 
         return $this->instructions;
     }
-
-
 }
 
 class XMLGenerator
@@ -391,7 +411,7 @@ class OutputGenerator extends XMLGenerator
         }
 
         $this->output->appendChild($this->program);
-        
+
         return $this->output->saveXML();
     }
 }
@@ -414,13 +434,9 @@ $longopts = [
     "print:",
     "stats:",
     "eols",
-
-
 ];
 
 $options = getopt($shortopts, $longopts);
-
-print_r($options);
 
 if (isset($options["help"])) {
     if (count($options) !== 1)
@@ -448,8 +464,10 @@ if (isset($options["help"])) {
    \r  --print=<string>\toutputs <string> to stats
    \r  --eols\t\tadds breaks to stats
    \r\n";
-    exit(ErrorCodes::EXIT_SUCCESS->value);
+    exit(0);
 }
+
+// $stats = new Stats();
 
 $reader = new InputReader();
 $input = $reader->get_input();
