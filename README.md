@@ -17,7 +17,7 @@ php8.1 parser.php <[source] [--options] [-flags] [--help]
 The whole implementation is just a pipe of specific parts of a parser that are connected with each other. 
 - **InputReader** takes contents from *input*, formats it (removes empty lines of code, comments and eofs) and then sends it to the InputAnalyser.
 - **InputAnalyser** takes array of clean lines of code, validates if header exists. If so, then generates header XML, then for each line creates instances of **Instruction**.
-- When creating each **Instruction** validates line to which it belongs to. If given line is valid, list of **Operand**s will be created for each Instruction. Once all the instructions are created, **InputAnalyser** will send them to **OutputGenerator**.
+- Each **Instruction** validates line to which it belongs to. If given line is valid, list of **Operand**s will be created for each Instruction. Once all the instructions are created, **InputAnalyser** will send them to **OutputGenerator**.
 - **OutputGenerator** is a configured object, extended from **XMLGenerator** where every instruction is being generated to XML and inserted to the whole XML structure.
 
 To validate data during all the process, some of the objects are using collection **Validators**, where all the validation logic is stored.
