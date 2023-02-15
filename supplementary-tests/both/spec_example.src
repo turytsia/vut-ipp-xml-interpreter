@@ -1,2 +1,14 @@
 .IPPcode23
-READ GF@var bool
+MOVE GF@counter string@ #1234
+MOVE GF@counter string@
+#3245678
+MOVE GF@counter string@
+#Hello !!!!
+LABEL alex
+JUMP alex
+JUMP alexforward
+JUMPIFNEQ alexforward2 int@5 int@2
+LABEL alexforward
+LABEL alexforward2
+LABEL alexforward3
+JUMP alexforward3
