@@ -1,6 +1,6 @@
 .example
 .vscode
 tests/**/*
-proj1
-supplementary-tests
+proj1/
+supplementary-tests/
 useful_functions.txt
