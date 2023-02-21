@@ -4,6 +4,7 @@ from enum import Enum
 import xml.etree.ElementTree as XML
 import re
 
+
 INSTRUCTION_DICT = {
     "MOVE": "var symb",
     "CREATEFRAME": "",
@@ -98,6 +99,51 @@ def get_options(*args):
 
     return is_help, source, input
 
+class OperandTypes(Enum):
+    VAR = "var"
+    SYMB = "symb"
+    TYPE = "type"
+    LABEL = "label"
+
+class Types():
+    def __init__(self, op_type: OperandTypes) -> None:
+        self.op_type = op_type.value
+
+
+class Var(Types):
+    def __init__(self, operand : XML.Element) -> None:
+            super().__init__(OperandTypes.VAR)
+            self.scope, self.value = operand.text.split('@')
+
+    def __repr__(self) -> str:
+        return f"VAR({self.scope}, {self.value})"
+    
+class Symb(Types):
+    def __init__(self, operand: XML.Element) -> None:
+        super().__init__(OperandTypes.SYMB)
+        self.type = operand.get("type")
+        self.value = operand.text
+
+    def __repr__(self) -> str:
+        return f"SYMB({self.type}, {self.value})"
+
+
+class Type(Types):
+    def __init__(self, operand: XML.Element) -> None:
+        super().__init__(OperandTypes.TYPE)
+        self.value = operand.text
+
+    def __repr__(self) -> str:
+        return f"TYPE({self.value})"
+
+
+class Label(Types):
+    def __init__(self, operand: XML.Element) -> None:
+        super().__init__(OperandTypes.LABEL)
+        self.value = operand.text
+
+    def __repr__(self) -> str:
+        return f"LABEL({self.value})"
 
 class Operand():
     # TODO argument order
@@ -105,24 +151,24 @@ class Operand():
         if not Operand._is_operand(operand):
             exit_with_message(f"Invalid operands in {inst_name}",
                               ErrorCodes.ERR_XML_STRUCT)
-        self.type = Operand._get_operand_type(operand)
-        print(self.type)
+        parsed_operand = Operand._parse_operand(operand)
+        self.type = parsed_operand.op_type
+        self.target = parsed_operand
 
     @staticmethod
-    def _get_operand_type(operand: XML.Element) -> str:
+    def _parse_operand(operand: XML.Element) -> Types:
         if not Operand._is_operand(operand):
             exit_with_message("Unknown argument",
                               ErrorCodes.ERR_XML_STRUCT)
         if Operand._is_var(operand):
-            return "var"
+            return Var(operand)
         elif Operand._is_symb(operand):
-            return "symb"
+            return Symb(operand)
         elif Operand._is_type(operand):
-            return "type"
+            return Type(operand)
         elif Operand._is_label(operand):
-            return "label"
+            return Label(operand)
         else:
-            print(operand.text)
             exit_with_message("Unexpected type",
                               ErrorCodes.ERR_TYPE)
 
@@ -165,13 +211,13 @@ class Operand():
         return True
 
     def __repr__(self) -> str:
-        return f"(\"{self.type}\" : value)"
+        return f"{self.target}"
 
 
 class Instruction():
     def __init__(self, element: XML.Element) -> None:
         self.opcode = element.get('opcode')
-        self.order = element.get('order')
+        self.order = int(element.get('order'))
         self.operands = []
 
         # REVIEW this could check number of args
@@ -182,7 +228,7 @@ class Instruction():
             self.operands.append(operand)
 
             #TODO here is an error where comparing symb and var
-            if operand.type != expected_operands[idx]:
+            if not Instruction._compare_types(operand.type, expected_operands[idx]):
                 exit_with_message("Unexpected type",ErrorCodes.ERR_TYPE)
 
     @staticmethod
@@ -208,9 +254,16 @@ class Instruction():
         if not Instruction._has_opcode(element) or not Instruction._has_order(element):
             return False
         return True
+    
+    @staticmethod
+    def _compare_types(t1: str, t2: str) -> bool:
+        if t1 == 'var':
+            return t1 == t2 or t2 == 'symb'
+        else:
+            return t1 == t2
 
     def __repr__(self) -> str:
-        return f"(order={self.order},instruction={self.opcode},operands={self.operands})\n"
+        return f"(order={self.order},instruction={self.opcode},operands={self.operands})"
 
 
 class InstructionManager():
@@ -223,6 +276,21 @@ class InstructionManager():
     def get_instructions(self):
         return self._instructions
 
+#FIXME
+class FrameManager():
+    def __init__(self) -> None:
+        self.frame_stack = []
+        self.global_frame = {}
+        self.temporary_frame = None
+
+    def create_frame(self):
+        pass
+
+    def push_frame(self):
+        pass
+
+    def pop_frame(self):
+        pass
 
 def main():
 
@@ -234,7 +302,7 @@ def main():
     if source is None and input is None:
         exit_with_message("You must set --source or --input file",
                           ErrorCodes.ERR_PARAMETER)
-    # TODO fix this
+    # FIXME fix this
     if source is None:
         source = sys.stdin
     if input is None:
@@ -257,13 +325,15 @@ def main():
                           ErrorCodes.ERR_XML_STRUCT)
 
     inst_manager = InstructionManager()
-    for child_element in root:
-        if not Instruction.is_instruction(child_element):
+    for instruction_element in root:
+        if not Instruction.is_instruction(instruction_element):
             exit_with_message("Expected <instruction> element with \"opcode\" and \"order\"",
                               ErrorCodes.ERR_XML_STRUCT)
-        inst_manager.insert(Instruction(child_element))
+        inst_manager.insert(Instruction(instruction_element))
 
-    print(inst_manager.get_instructions())
+    #REVIEW at this point instructions are validated
+    for instruction in sorted(inst_manager.get_instructions(), key=lambda i: i.order):
+        print(instruction)
 
 
 if __name__ == "__main__":
