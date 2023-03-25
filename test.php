@@ -120,7 +120,7 @@ class Tester
         $this->setPhpExecutable();
 
         exec("mkdir -p tmp");
-        $this->testDir("parser", -1);
+        $this->testDir("", -1);
         echo "\n";
         $failedStr = $this->failed === 0 ? green("no failed tests") : red("{$this->failed} failed tests");
         $passedStr = $this->passed === 0 ? red("no passed tests") : green("{$this->passed} passed tests");

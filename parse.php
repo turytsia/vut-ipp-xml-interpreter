@@ -1,7 +1,8 @@
 <?php
-/*
-    .IPPcode23 analyzer
-    author: Turytsia Oleksandr (xturyt00)
+
+/** 
+ *   .IPPcode23 analyzer
+ *   @author Turytsia Oleksandr (xturyt00)
 */
 
 ini_set('display_errors', 'stderr');
@@ -94,13 +95,13 @@ class Validators
 
         switch ($type) {
             case "int":
-                return preg_match("/^[+\-]?\d+$/", $literal);
+                return preg_match("/^(([-+]?\d+)|(0[oO]?[0-7]+)|(0[xX][0-9a-fA-F]+))$/", $literal);
             case "bool":
                 return preg_match("/^(true|false)$/", $literal);
             case "nil":
                 return preg_match("/^nil$/", $literal);
             case "string":
-                return !preg_match("/^.*(\\\\(\d\d\D|\d\D|\D).*)|(\\\\(\d\d|\d)?)$/", $literal);
+                return !preg_match("/^.*(\\\\(?!\d\d\d)).*$/u", $literal);
         }
         return true;
     }
@@ -314,10 +315,14 @@ class Operand
     {
         switch ($type) {
             case OperandTypes::SYMB:
-                if (!Validators::is_var($operand)) {
+                if (Validators::is_var($operand)) {
+                    [$this->type, $this->value] = ["var", $operand];
+                }else if(Validators::is_symb($operand)){
                     [$this->type, $this->value] = explode("@", $operand);
-                    break;
+                }else{
+                    
                 }
+                break;
             case OperandTypes::VAR:
             case OperandTypes::TYPE:
             case OperandTypes::LABEL:
@@ -433,6 +438,8 @@ class InputAnalyser
      */
     public function get_instructions()
     {
+        if(count($this->input) == 0)
+            ErrorHandler::exit_with_error(ErrorCodes::ERR_HEADER, "invalid header");
         if (!Validators::is_header($this->input[0]))
             ErrorHandler::exit_with_error(ErrorCodes::ERR_HEADER, "invalid header");
 
@@ -478,7 +485,8 @@ class XMLGenerator
         foreach ($instruction->get_operands() as $key => $operand) {
             $operand_template = $this->output->createElement("arg" . ($key + 1));
             $operand_template->setAttribute("type", strtolower($operand->type));
-            $operand_template->nodeValue = $operand->value;
+            $valueNode = $this->output->createTextNode($operand->value);
+            $operand_template->appendChild($valueNode);
             $instruction_template->appendChild($operand_template);
         }
         $this->program->appendChild($instruction_template);
