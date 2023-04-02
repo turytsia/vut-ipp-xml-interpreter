@@ -13,7 +13,6 @@ USAGE = """
 \b--input=PATH     The input for XML source file.
 """
 
-
 class Exceptions:
     class CodeTypes(Enum):
         SUCCESS = 0
@@ -92,14 +91,6 @@ class Exceptions:
             super().__init__(message, Exceptions.CodeTypes.ERR_INTERNAL)
 
 
-class SymbTypes(Enum):
-    INT = "int"
-    STRING = "string"
-    BOOL = "bool"
-    FLOAT = "float"
-    NIL = "nil"
-
-
 class FrameTypes(Enum):
     TF = 1
     LF = 2
@@ -108,163 +99,175 @@ class FrameTypes(Enum):
 
 class Types:
     class Symb:
-        def __init__(self, value, _type):
+        def __init__(self, value, _type: 'Types.Type'):
             self.type = Types.Type.to_type(_type)
-
+            # FIXME
             try:
-                if self.type == SymbTypes.INT:
+                if self.type.is_int():
                     self.value = int(value)
-                elif self.type == SymbTypes.BOOL:
+                elif self.type.is_bool():
                     if type(value) == bool:
                         self.value = value
                     else:
                         self.value = True if value == "true" else False
-                elif self.type == SymbTypes.FLOAT:
-                    self.value = float.fromhex(value) if type(value) == str else value
+                elif self.type.is_float():
+                    self.value = float.fromhex(value) if type(
+                        value) == str else value
                 else:
                     self.value = value
             except ValueError:
                 raise Exceptions.XMLUnexpectedError(
                     f"{value} is not valid int")
 
-        def __gt__(self, other):
+        @classmethod
+        def Int(cls, value):
+            return cls(value, Types.Type.Int())
+
+        @classmethod
+        def Float(cls, value):
+            return cls(value, Types.Type.Float())
+
+        @classmethod
+        def String(cls, value):
+            return cls(value, Types.Type.String())
+
+        @classmethod
+        def Bool(cls, value):
+            return cls(value, Types.Type.Bool())
+
+        @classmethod
+        def Nil(cls, value):
+            return cls(value, Types.Type.Nil())
+
+        def __gt__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if self.type == SymbTypes.NIL or other.type == SymbTypes.NIL:
+                if self.type.is_nil() or other.type.is_nil():
                     raise Exceptions.TypeError(f"GT doesn't support NIL")
                 if self.type != other.type:
                     raise Exceptions.TypeError("Incompatible types in LT")
-                return Types.Symb(self.value > other.value, SymbTypes.BOOL)
-            else:
-                return NotImplemented
-            
-        def __lt__(self, other):
+                return Types.Symb.Bool(self.value > other.value)
+            return NotImplemented
+
+        def __lt__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if self.type == SymbTypes.NIL or other.type == SymbTypes.NIL:
+                if self.type.is_nil() or other.type.is_nil():
                     raise Exceptions.TypeError(f"LT doesn't support NIL")
                 if self.type != other.type:
                     raise Exceptions.TypeError("Incompatible types in LT")
-                return Types.Symb(self.value < other.value, SymbTypes.BOOL)
-            else:
-                return NotImplemented
-            
-        def __eq__(self, other):
+                return Types.Symb.Bool(self.value < other.value)
+            return NotImplemented
+
+        def __eq__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
                 if (self.type != other.type and
-                    self.type != SymbTypes.NIL and other.type != SymbTypes.NIL):
+                        not self.type.is_nil() and not other.type.is_nil()):
                     raise Exceptions.TypeError(
                         f"Operands must be of the same type")
-                return Types.Symb(self.value == other.value, SymbTypes.BOOL)
-            else:
-                return NotImplemented
-            
+                return Types.Symb.Bool(self.value == other.value)
+            return NotImplemented
+
         def __invert__(self):
-            if self.type != SymbTypes.BOOL:
+            if not self.type.is_bool():
                 raise Exceptions.TypeError(f"AND/OR/NOT supports bool only")
-            return Types.Symb(not self.value, SymbTypes.BOOL)
-        
-        def __and__(self, other):
+            return Types.Symb.Bool(not self.value)
+
+        def __and__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if self.type != SymbTypes.BOOL or other.type != SymbTypes.BOOL:
+                if not self.type.is_bool() or not other.type.is_bool():
                     raise Exceptions.TypeError(
                         f"AND/OR/NOT supports bool only")
-                return Types.Symb(self.value and other.value, SymbTypes.BOOL)
-            else:
-                return NotImplemented
-            
-        def __or__(self, other):
+                return Types.Symb.Bool(self.value and other.value)
+            return NotImplemented
+
+        def __or__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if self.type != SymbTypes.BOOL or other.type != SymbTypes.BOOL:
+                if not self.type.is_bool() or not other.type.is_bool():
                     raise Exceptions.TypeError(
                         f"AND/OR/NOT supports bool only")
-                return Types.Symb(self.value or other.value, SymbTypes.BOOL)
-            else:
-                return NotImplemented
-        def __add__(self, other):
+                return Types.Symb.Bool(self.value or other.value)
+            return NotImplemented
+
+        def __add__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if not (self.type == SymbTypes.INT and other.type == SymbTypes.INT
-                        or self.type == SymbTypes.FLOAT and other.type == SymbTypes.FLOAT):
+                if not (self.type.is_int() and other.type.is_int()
+                        or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
-                if self.type == SymbTypes.INT:
-                    return Types.Symb(int(self.value + other.value), SymbTypes.INT)
+                if self.type.is_int():
+                    # FIXME could be non-int
+                    return Types.Symb.Int(int(self.value + other.value))
                 else:
-                    return Types.Symb(self.value + other.value, SymbTypes.FLOAT)
-            else:
-                return NotImplemented
+                    return Types.Symb.Float(self.value + other.value)
+            return NotImplemented
 
-        def __sub__(self, other):
+        def __sub__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if not (self.type == SymbTypes.INT and other.type == SymbTypes.INT
-                        or self.type == SymbTypes.FLOAT and other.type == SymbTypes.FLOAT):
+                if not (self.type.is_int() and other.type.is_int()
+                        or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
-                if self.type == SymbTypes.INT:
-                    return Types.Symb(int(self.value - other.value), SymbTypes.INT)
+                if self.type.is_int():
+                    return Types.Symb.Int(int(self.value - other.value))
                 else:
-                    return Types.Symb(self.value - other.value, SymbTypes.FLOAT)
-            else:
-                return NotImplemented
+                    return Types.Symb.Float(self.value - other.value)
+            return NotImplemented
 
-        def __mul__(self, other):
+        def __mul__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if not (self.type == SymbTypes.INT and other.type == SymbTypes.INT
-                        or self.type == SymbTypes.FLOAT and other.type == SymbTypes.FLOAT):
+                if not (self.type.is_int() and other.type.is_int()
+                        or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
-                if self.type == SymbTypes.INT:
-                    return Types.Symb(int(self.value * other.value), SymbTypes.INT)
+                if self.type.is_int():
+                    return Types.Symb.Int(int(self.value * other.value))
                 else:
-                    return Types.Symb(self.value * other.value, SymbTypes.FLOAT)
-            else:
-                return NotImplemented
+                    return Types.Symb.Float(self.value * other.value)
+            return NotImplemented
 
-        def __floordiv__(self, other):
+        def __floordiv__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if not (self.type == SymbTypes.INT and other.type == SymbTypes.INT):
+                if not (self.type.is_int() and other.type.is_int()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
                 if other.value == 0:
                     raise Exceptions.OperandValueError(
                         "0 division is not allowed")
-                return Types.Symb(self.value // other.value, SymbTypes.INT)
-            else:
-                return NotImplemented
-            
-        def __truediv__(self, other):
+                return Types.Symb.Int(self.value // other.value)
+            return NotImplemented
+
+        def __truediv__(self, other: 'Types.Symb'):
             if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
-                if not (self.type == SymbTypes.INT and other.type == SymbTypes.INT
-                        or self.type == SymbTypes.FLOAT and other.type == SymbTypes.FLOAT):
+                if not (self.type.is_int() and other.type.is_int()
+                        or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
                 if other.value == 0:
                     raise Exceptions.OperandValueError(
                         "0 division is not allowed")
-                if self.type == SymbTypes.INT:
-                    return Types.Symb(int(self.value / other.value), SymbTypes.INT)
+                if self.type.is_int():
+                    return Types.Symb.Int(int(self.value / other.value))
                 else:
-                    return Types.Symb(self.value / other.value, SymbTypes.FLOAT)
-            else:
-                return NotImplemented
-        
+                    return Types.Symb.Float(self.value / other.value)
+            return NotImplemented
+
         def __getitem__(self, arg: 'Types.Symb'):
-            if arg.type != SymbTypes.INT:
+            if not arg.type.is_int():
                 raise Exceptions.TypeError(
                     "Invalid index type")
-            if self.type != SymbTypes.STRING:
+            if not self.type.is_string():
                 raise Exceptions.TypeError(
                     "Expected string")
             try:
-                return Types.Symb(self.value[arg.value], SymbTypes.STRING)
+                return Types.Symb.String(self.value[arg.value])
             except IndexError:
                 raise Exceptions.StringOperationError("Index out of range")
 
-
         def __str__(self):
-            if self.type == SymbTypes.BOOL:
+            if self.type.is_bool():
                 return "true" if self.value else "false"
-            if self.type == SymbTypes.FLOAT:
+            if self.type.is_float():
                 return float.hex(float(self.value))
-            return str(self.value) if self.type != SymbTypes.NIL else ""
+            return str(self.value) if not self.type.is_nil() else ""
 
         def __repr__(self):
             return f"SYMB({self.type}, {self.value})"
@@ -293,27 +296,82 @@ class Types:
             return f"VAR({self.name}, {self.value})"
 
     class Type:
-        def __init__(self, value: SymbTypes):
+        class _SymbTypes(Enum):
+            INT = "int"
+            STRING = "string"
+            BOOL = "bool"
+            FLOAT = "float"
+            NIL = "nil"
+
+        def __init__(self, value: 'Types.Type._SymbTypes'):
             self.value = value
 
         def __repr__(self):
             return f"TYPE({self.value})"
 
-        @staticmethod
-        def to_type(type: str):
-            if isinstance(type, SymbTypes):
-                return type
+        def __eq__(self, other: 'Types.Type'):
+            if isinstance(other, Types.Type):
+                return self.value == other.value
+            return False
 
-            if type == "int":
-                return SymbTypes.INT
-            elif type == "string":
-                return SymbTypes.STRING
-            elif type == "bool":
-                return SymbTypes.BOOL
-            elif type == "float":
-                return SymbTypes.FLOAT
+        def __ne__(self, other: 'Types.Type'):
+            if isinstance(other, Types.Type):
+                return self.value != other.value
+            return False
+
+        def __str__(self):
+            return str(self.value.value)
+
+        @classmethod
+        def Int(cls):
+            return cls(cls._SymbTypes.INT)
+
+        @classmethod
+        def Float(cls):
+            return cls(cls._SymbTypes.FLOAT)
+
+        @classmethod
+        def String(cls):
+            return cls(cls._SymbTypes.STRING)
+
+        @classmethod
+        def Bool(cls):
+            return cls(cls._SymbTypes.BOOL)
+
+        @classmethod
+        def Nil(cls):
+            return cls(cls._SymbTypes.NIL)
+
+        def is_int(self):
+            return self.value == Types.Type._SymbTypes.INT
+
+        def is_float(self):
+            return self.value == Types.Type._SymbTypes.FLOAT
+
+        def is_string(self):
+            return self.value == Types.Type._SymbTypes.STRING
+
+        def is_bool(self):
+            return self.value == Types.Type._SymbTypes.BOOL
+
+        def is_nil(self):
+            return self.value == Types.Type._SymbTypes.NIL
+
+        @staticmethod
+        def to_type(_type: str) -> 'Types.Type':
+            if isinstance(_type, Types.Type):
+                return _type
+
+            if _type == "int":
+                return Types.Type.Int()
+            elif _type == "string":
+                return Types.Type.String()
+            elif _type == "bool":
+                return Types.Type.Bool()
+            elif _type == "float":
+                return Types.Type.Float()
             else:
-                return SymbTypes.NIL
+                return Types.Type.Nil()
 
     class Label:
         def __init__(self, value):
@@ -619,25 +677,25 @@ class StackManager():
         if self.is_empty():
             raise Exceptions.ValueUndefinedError("Data stack is empty")
         return self._data.pop()  # FIXME Raise error
-    
+
     def get_symb(self):
         if len(self._data) < 1:
             raise Exceptions.ValueUndefinedError("Data stack is empty")
         return self._data[-1]
-    
+
     def get_symb_symb(self):
         if len(self._data) < 2:
             raise Exceptions.ValueUndefinedError("Data stack is empty")
         return self._data[-2], self._data[-1]
-    
+
     def pop_symb_symb(self):
         symb2 = self.pop()
         symb1 = self.pop()
         return symb1, symb2
-    
+
     def clear(self):
         self._data = []
-    
+
     def add(self):
         symb2 = self.pop()
         symb1 = self.pop()
@@ -652,7 +710,7 @@ class StackManager():
         symb2 = self.pop()
         symb1 = self.pop()
         self.push(symb1*symb2)
-    
+
     def idiv(self):
         symb2 = self.pop()
         symb1 = self.pop()
@@ -686,21 +744,21 @@ class StackManager():
     def nots(self):
         symb1 = self.pop()
         self.push(~symb1)
-    
+
     def int2char(self):
         symb = self.pop()
-        if symb.type != SymbTypes.INT:
+        if not symb.type.is_int():
             raise Exceptions.TypeError(
                 "Invalid type in INT2CHARS")
         try:
-            self.push(Types.Symb(chr(symb.value), SymbTypes.STRING))
+            self.push(Types.Symb.String(chr(symb.value)))
         except ValueError:
-            raise Exceptions.StringOperationError(f"{symb} is not valid unicode")
+            raise Exceptions.StringOperationError(
+                f"{symb} is not valid unicode")
 
     def stri2int(self):
         symb1, symb2 = self.pop_symb_symb()
-        self.push(Types.Symb(ord(symb1[symb2].value), SymbTypes.INT))  # FIXME
-
+        self.push(Types.Symb.Int(ord(symb1[symb2].value)))  # FIXME
 
     def is_empty(self):
         return len(self._data) == 0
@@ -721,6 +779,16 @@ def read_input_generator(filename=None):
         if file is not sys.stdin:
             file.close()
 
+
+def _write(symb: Types.Symb, file=sys.stdout):
+    if symb.type.is_string():
+        value = symb.value
+        matches = re.findall(r"\\[\d]{3}", str(value))
+        for match in matches:
+            value = value.replace(match, chr(int(match[1:])))
+        print(value, end="",file=file)
+    else:
+        print(symb, end="", file=file)
 
 class InstructionManager():
 
@@ -816,7 +884,6 @@ def main():
                 else:
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is already defined")
-                
 
         idx = 0
         # REVIEW at this point instructions are validated
@@ -836,24 +903,22 @@ def main():
                 symb, = instruction.operands
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-
-                if symb.type == SymbTypes.STRING:
-                    value = symb.value
-                    matches = re.findall(r"\\[\d]{3}", value)
-                    for match in matches:
-                        value = value.replace(match, chr(int(match[1:])))
-                    print(value, end="")
-                else:
-                    print(symb, end="")
-                
-
+                _write(symb)
+            elif instruction.opcode == "DPRINT":
+                symb, = instruction.operands
+                if isinstance(symb, Types.Var):
+                    symb = FManager.get_var(symb)
+                _write(symb, file=sys.stderr)
+            elif instruction.opcode == "BREAK":
+                pass #FIXME add functionality
             elif instruction.opcode == "READ":
-                var, type = instruction.operands
+                var, _type = instruction.operands
                 try:
                     var = FManager.get_var(var)
-                    var.set_symb(Types.Symb(next(input), type.value))
+                    var.set_symb(Types.Symb(
+                        next(input), Types.Type.to_type(_type.value)))
                 except StopIteration:
-                    var.set_symb(Types.Symb(None, SymbTypes.NIL))
+                    var.set_symb(Types.Symb.Nil(None))
             elif instruction.opcode == "MOVE":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
@@ -909,8 +974,8 @@ def main():
                 symb, = instruction.operands
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-                if symb.type != SymbTypes.INT:
-                    raise Exceptions.OperandValueError(
+                if not symb.type.is_int():
+                    raise Exceptions.TypeError(
                         "EXIT accepts only integer")
                 if symb.value < 0 or symb.value > 49:
                     raise Exceptions.OperandValueError(
@@ -921,11 +986,10 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-
-                if symb.type == SymbTypes.NIL:
-                    var.set_symb(Types.Symb(None, SymbTypes.NIL))
+                if symb.type.is_nil():
+                    var.set_symb(Types.Symb.Nil(None))
                 else:
-                    var.set_symb(Types.Symb(symb.type.value, SymbTypes.STRING))
+                    var.set_symb(Types.Symb.String(str(symb.type)))
             elif instruction.opcode == "LT":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
@@ -953,17 +1017,15 @@ def main():
                     symb2 = FManager.get_var(symb2)
                 var.set_symb(symb1 == symb2)
 
-            
-
             elif instruction.opcode == "INT2CHAR":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-                if symb.type != SymbTypes.INT:
-                    raise Exceptions.StringOperationError(
+                if not symb.type.is_int():
+                    raise Exceptions.TypeError(
                         "Invalid type in INT2CHAR")
-                var.set_symb(Types.Symb(chr(symb.value), SymbTypes.STRING))
+                var.set_symb(Types.Symb.String(chr(symb.value)))
             elif instruction.opcode == "STRI2INT":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
@@ -971,35 +1033,35 @@ def main():
                     symb1 = FManager.get_var(symb1)
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
-                
-                var.set_symb(Types.Symb(ord(symb1[symb2].value), SymbTypes.INT))
-                
+
+                var.set_symb(Types.Symb.Int(ord(symb1[symb2].value)))
+
             elif instruction.opcode == "INT2FLOAT":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-                    if symb.type == SymbTypes.NIL:
+                    if symb.type.is_nil():
                         raise Exceptions.ValueUndefinedError(
                             "Cannot convert NIL to FLOAT")
-                if symb.type != SymbTypes.INT:
+                if not symb.type.is_int():
                     raise Exceptions.TypeError(
                         "Invalid type in convert")
 
-                var.set_symb(Types.Symb(symb.value, SymbTypes.FLOAT))
+                var.set_symb(Types.Symb.Float(symb.value))
             elif instruction.opcode == "FLOAT2INT":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-                    if symb.type == SymbTypes.NIL:
+                    if symb.type.is_nil():
                         raise Exceptions.ValueUndefinedError(
                             "Cannot convert NIL to INT")
-                if symb.type != SymbTypes.FLOAT:
+                if not symb.type.is_float():
                     raise Exceptions.TypeError(
                         "Invalid type in convert")
 
-                var.set_symb(Types.Symb(int(symb.value), SymbTypes.INT))
+                var.set_symb(Types.Symb.Int(int(symb.value)))
             elif instruction.opcode == "LABEL":
                 pass
             elif instruction.opcode == "CALL":
@@ -1032,7 +1094,7 @@ def main():
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is undefined")
 
-                if symb1.type != SymbTypes.NIL and symb2.type != SymbTypes.NIL:
+                if not symb1.type.is_nil and not symb2.type.is_nil():
                     if symb1.type != symb2.type:
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFEQ")
@@ -1040,7 +1102,7 @@ def main():
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
                 if isinstance(symb2, Types.Var):
-                    symb2 = FManager.get_var(symb1)
+                    symb2 = FManager.get_var(symb2)
 
                 if symb1.value == symb2.value:
                     idx = jump_to
@@ -1052,7 +1114,7 @@ def main():
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is undefined")
 
-                if symb1.type != SymbTypes.NIL and symb2.type != SymbTypes.NIL:
+                if not symb1.type.is_nil() and not symb2.type.is_nil():
                     if symb1.type != symb2.type:
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFNEQ")
@@ -1060,7 +1122,7 @@ def main():
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
                 if isinstance(symb2, Types.Var):
-                    symb2 = FManager.get_var(symb1)
+                    symb2 = FManager.get_var(symb2)
 
                 if symb1.value != symb2.value:
                     idx = jump_to
@@ -1071,10 +1133,10 @@ def main():
                 if jump_to is None:
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is undefined")
-                
-                symb1,symb2 = SManager.get_symb_symb()
 
-                if symb1.type != SymbTypes.NIL and symb2.type != SymbTypes.NIL:
+                symb1, symb2 = SManager.get_symb_symb()
+
+                if not symb1.type.is_nil() and not symb2.type.is_nil():
                     if symb1.type != symb2.type:
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFEQS")
@@ -1087,10 +1149,10 @@ def main():
                 if jump_to is None:
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is undefined")
-                
+
                 symb1, symb2 = SManager.get_symb_symb()
 
-                if symb1.type != SymbTypes.NIL and symb2.type != SymbTypes.NIL:
+                if not symb1.type.is_nil() and not symb2.type.is_nil():
                     if symb1.type != symb2.type:
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFNEQ")
@@ -1132,8 +1194,67 @@ def main():
                 SManager.int2char()
             elif instruction.opcode == "STRI2INTS":
                 SManager.stri2int()
-            
-
+            elif instruction.opcode == "CONCAT":
+                var, symb1, symb2 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                if isinstance(symb2, Types.Var):
+                    symb2 = FManager.get_var(symb2)
+                if not symb1.type.is_string() or not symb2.type.is_string():
+                    raise Exceptions.TypeError("Both operands must be of type string in CONCAT")
+                var.set_symb(Types.Symb.String(symb1.value + symb2.value))
+            elif instruction.opcode == "STRLEN":
+                var, symb1 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                if not symb1.type.is_string():
+                    raise Exceptions.TypeError(
+                        "Operand must be of type string in STRLEN")
+                var.set_symb(Types.Symb.Int(len(symb1.value)))
+            elif instruction.opcode == "GETCHAR":
+                var, symb1, symb2 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                if isinstance(symb2, Types.Var):
+                    symb2 = FManager.get_var(symb2)
+                if not symb1.type.is_string():
+                    raise Exceptions.TypeError(
+                        "Second operand in GETCHAR must be string")
+                if not symb2.type.is_int():
+                    raise Exceptions.TypeError(
+                        "Third operand in GETCHAR must be integer")
+                if symb2.value < 0:
+                    raise Exceptions.StringOperationError(
+                        "Second operand in GETCHAR must be >= 0")
+                var.set_symb(Types.Symb.String(symb1[symb2]))
+            elif instruction.opcode == "SETCHAR":
+                var, symb1, symb2 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                if isinstance(symb2, Types.Var):
+                    symb2 = FManager.get_var(symb2)
+                if not var.type.is_string():
+                    raise Exceptions.TypeError(
+                        "First operand in SETCHAR must be string")
+                if not symb1.type.is_int():
+                    raise Exceptions.TypeError(
+                        "Second operand in SETCHAR must be integer")
+                if symb1.value < 0:
+                    raise Exceptions.StringOperationError(
+                        "Second operand in SETCHAR must be >= 0")
+                if not symb2.type.is_string():
+                    raise Exceptions.StringOperationError(
+                        "Third operand in SETCHAR must be string")
+                try:
+                    listValue = list(var.value)
+                    listValue[symb1.value] = symb2.value[0]
+                    var.set_symb(Types.Symb.String("".join(listValue)))
+                except IndexError as e:
+                    raise Exceptions.StringOperationError(e)
             idx += 1
 
     except (Exceptions.OptionError,

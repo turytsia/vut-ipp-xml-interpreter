@@ -1,3 +1,2 @@
-42
-just a string!
-true
+0x1.p0 
++0x1.00p-0
