@@ -1,1 +1,3 @@
-123
+42
+just a string!
+true
