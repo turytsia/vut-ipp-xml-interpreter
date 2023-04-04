@@ -1,0 +1,14 @@
+Archive:  xturyt00.zip
+  inflating: interpret.py            
+  inflating: readme2.md              
+  inflating: rozsireni               
+
+Usage: python interpret.py [-h|--help|OPTIONS]
+
+OPTIONS:
+--help           Show this message and exit. No other options are allowed.
+--source=PATH    The source of the XML file.
+--input=PATH     The input for XML source file.
+
+Author: xturyt00 (Oleksandr Turytsia)
+

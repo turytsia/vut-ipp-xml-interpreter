@@ -1,3 +1,4 @@
+
 import getopt
 import sys
 from enum import Enum
@@ -6,14 +7,38 @@ import re
 from abc import ABCMeta, abstractmethod
 
 USAGE = """
-\bUsage: python interpret.py [OPTIONS]\n
-\bOptions:
-\b--help           Show this message and exit.
+\bUsage: python interpret.py [-h|--help|OPTIONS]\n
+\bOPTIONS:
+\b--help           Show this message and exit. No other options are allowed.
 \b--source=PATH    The source of the XML file.
 \b--input=PATH     The input for XML source file.
+\b
+\bAuthor: xturyt00 (Oleksandr Turytsia)
 """
 
+
 class Exceptions:
+    """
+        A class that contains configured custom exceptions.
+
+        Enums:
+            CodeTypes: contains error codes
+
+        Classes:
+            Usage: -h or --help options
+            OptionError:  User used invalid option
+            XMLFormatError: XML parsing error
+            XMLUnexpectedError: Syntax error in XML
+            SemanticError: Semantic error in XML
+            TypeError: invalid Operand type detected
+            VariableUndefinedError: Non-existing value
+            OperandValueError: 0-division
+            StringOperationError: Error when working with string
+            InternalError: Any other errors...
+
+        Methods:
+            exit(e): Handles custom exceptions
+    """
     class CodeTypes(Enum):
         SUCCESS = 0
         ERR_PARAMETER = 10
@@ -32,17 +57,20 @@ class Exceptions:
 
     @staticmethod
     def exit(e: '_Exception'):
+        """
+            Handles custom exceptions, and exits the program with proper exit code.
+        """
         print(e, file=sys.stderr)
         exit(e.code)
 
     class _Exception(Exception):
+        """
+            Generic class, that is configured for all types of exceptions with `code` and `message`
+        """
+
         def __init__(self, message: str, code: 'Exceptions.CodeTypes'):
             super().__init__(message)
             self.code = code.value
-
-    class Usage(_Exception):
-        def __init__(self):
-            super().__init__(USAGE, Exceptions.CodeTypes.SUCCESS)
 
     class OptionError(_Exception):
         def __init__(self, message):
@@ -71,7 +99,6 @@ class Exceptions:
     class FrameError(_Exception):
         def __init__(self, message):
             super().__init__(message, Exceptions.CodeTypes.ERR_STACK)
-            self.code = 55
 
     class ValueUndefinedError(_Exception):
         def __init__(self, message):
@@ -92,16 +119,48 @@ class Exceptions:
 
 
 class FrameTypes(Enum):
+    """
+        Enum, represents frame types
+
+        Types:
+            LF
+            GF
+            TF
+    """
     TF = 1
     LF = 2
     GF = 3
 
 
 class Types:
+    """
+        Class, that implements all the typing dependencies and methods.
+
+        Nested classes represent literal of specific types, class inheritance represents their subtype (or more specific literals).
+
+        Classes:
+            Symb
+            Var
+            Type
+            Label
+    """
     class Symb:
+        """
+            Class, represents Symb literal with its value and type
+
+            Methods:
+                Special methods, that define behaviour for various operators/built-in methods.
+
+            Classmethods:
+                Int(): Creates instance of Symb with type integer
+                Float(): Creates instance of Symb with type float
+                String(): Creates instance of Symb with type string
+                Bool(): Creates instance of Symb with type boolean
+                Nil(): Creates instance of Symb with type nil
+        """
+
         def __init__(self, value, _type: 'Types.Type'):
             self.type = Types.Type.to_type(_type)
-            # FIXME
             try:
                 if self.type.is_int():
                     self.value = int(value)
@@ -121,22 +180,37 @@ class Types:
 
         @classmethod
         def Int(cls, value):
+            """
+                Creates instance of Symb with type integer
+            """
             return cls(value, Types.Type.Int())
 
         @classmethod
         def Float(cls, value):
+            """
+                Creates instance of Symb with type float
+            """
             return cls(value, Types.Type.Float())
 
         @classmethod
         def String(cls, value):
+            """
+                Creates instance of Symb with type string
+            """
             return cls(value, Types.Type.String())
 
         @classmethod
         def Bool(cls, value):
+            """
+                Creates instance of Symb with type bool
+            """
             return cls(value, Types.Type.Bool())
 
         @classmethod
         def Nil(cls, value):
+            """
+                Creates instance of Symb with type nil
+            """
             return cls(value, Types.Type.Nil())
 
         def __gt__(self, other: 'Types.Symb'):
@@ -194,7 +268,6 @@ class Types:
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
                 if self.type.is_int():
-                    # FIXME could be non-int
                     return Types.Symb.Int(int(self.value + other.value))
                 else:
                     return Types.Symb.Float(self.value + other.value)
@@ -273,16 +346,36 @@ class Types:
             return f"SYMB({self.type}, {self.value})"
 
     class Var(Symb):
+        """
+            Class, represents literal for variables.
+
+            Methods:
+                set_symb(symb): Assigns given Symb to a variable.
+                to_scope(scope): Converts 'TF'|'LF'|'GF' to a specific type.
+        """
+
         def __init__(self, name, scope):
             super().__init__(None, None)
             self.name = name
             self.scope = self.to_scope(scope)
 
         def set_symb(self, symb: 'Types.Symb'):
+            """
+                Assigns given Symb to a variable.
+            """
             self.type = symb.type
             self.value = symb.value
 
         def to_scope(self, scope: str):
+            """
+                Converts 'TF'|'LF'|'GF' to a specific type.
+                
+                Raise:
+                    InternalError: if given type of frame is not valid.
+
+                Return:
+                    constant of type FrameTypes.
+            """
             if scope == "TF":
                 return FrameTypes.TF
             elif scope == "LF":
@@ -296,6 +389,24 @@ class Types:
             return f"VAR({self.name}, {self.value})"
 
     class Type:
+        """
+        Class, represents type literal, and type of Var and Symb.
+
+        Classmethods:
+            Int(): Creates instance of Type integer.
+            Float(): Creates instance of Type float.
+            String(): Creates instance of Type string.
+            Bool(): Creates instance of Type bool.
+            Nil(): Creates instance of Type nil.
+
+        Methods:
+            is_int(): Checks if type is integer
+            is_float(): Checks if type is float
+            is_string(): Checks if type is string
+            is_bool(): Checks if type is bool
+            is_nil(): Checks if type is nil
+            to_type(): converts 'var'|'int'|'float'|'string'|'bool'|'nil' to a specific type. Calls methods above.
+        """
         class _SymbTypes(Enum):
             INT = "int"
             STRING = "string"
@@ -324,37 +435,67 @@ class Types:
 
         @classmethod
         def Int(cls):
+            """
+                Creates instance of Type integer
+            """
             return cls(cls._SymbTypes.INT)
 
         @classmethod
         def Float(cls):
+            """
+                Creates instance of Type float
+            """
             return cls(cls._SymbTypes.FLOAT)
 
         @classmethod
         def String(cls):
+            """
+                Creates instance of Type string
+            """
             return cls(cls._SymbTypes.STRING)
 
         @classmethod
         def Bool(cls):
+            """
+                Creates instance of Type bool
+            """
             return cls(cls._SymbTypes.BOOL)
 
         @classmethod
         def Nil(cls):
+            """
+                Creates instance of Type nil
+            """
             return cls(cls._SymbTypes.NIL)
 
         def is_int(self):
+            """
+                Checks if type is integer
+            """
             return self.value == Types.Type._SymbTypes.INT
 
         def is_float(self):
+            """
+                Checks if type is float
+            """
             return self.value == Types.Type._SymbTypes.FLOAT
 
         def is_string(self):
+            """
+                Checks if type is string
+            """
             return self.value == Types.Type._SymbTypes.STRING
 
         def is_bool(self):
+            """
+                Checks if type is bool
+            """
             return self.value == Types.Type._SymbTypes.BOOL
 
         def is_nil(self):
+            """
+                Checks if type is nil
+            """
             return self.value == Types.Type._SymbTypes.NIL
 
         @staticmethod
@@ -374,6 +515,10 @@ class Types:
                 return Types.Type.Nil()
 
     class Label:
+        """
+            Class, represents labels
+        """
+
         def __init__(self, value):
             self.value = value
 
@@ -382,8 +527,27 @@ class Types:
 
 
 class Parser:
+    """
+        A class that contains nested classes that parse XML to a specific abstract object.
+
+        Classes:
+            Instruction
+            _GenericParseType
+            Symb
+            Var
+            Type
+            Label
+    """
 
     class Instruction:
+        """
+            Parses XML object into Instruction.
+
+            Methods:
+                parse(): parses XML object that represents instruction in XML and returns instance of `Instruction`.
+                is_valid(): checks wether the XML is valid instruction object.
+        """
+
         def __init__(self, element: XML.Element):
             self.element = element
             self.opcode = element.get('opcode')
@@ -391,12 +555,27 @@ class Parser:
             self.operands = list(element)
 
         def parse(self):
+            """
+                returns instance of Types.Instruction
+
+                Raise:
+                    XMLUnexpectedError: instruction object is not valid XML.
+
+                Return:
+                    Instance of Types.Instruction
+            """
             if not self.is_valid():
                 raise Exceptions.XMLUnexpectedError("Instruction is not valid")
 
             return Instruction(self.opcode, self.order, self.operands)
 
         def is_valid(self):
+            """
+                Checks if XML object is a valid instruction
+
+                Return:
+                    True if object is valid, othewise - False
+            """
             return (self.opcode is not None
                     and self.order is not None
                     and self.opcode.upper() in dict.keys(EXPECTED_TYPES)
@@ -404,6 +583,14 @@ class Parser:
                     and self.element.tag == 'instruction')
 
     class _GenericParseType(metaclass=ABCMeta):
+        """
+            Abstract class that defines behaviour for methods that parse XML.
+
+            Methods definitions:
+                parse()
+                is_valid()
+        """
+
         def __init__(self, element: XML.Element):
             self.element = element
             self.attr = element.get("type")
@@ -421,16 +608,37 @@ class Parser:
             pass
 
     class Symb(_GenericParseType):
+        """
+            Class that is configured to parse `Symb` literals out of XML
+
+            Methods:
+                parse(): Returns instance of Symb in case if XML object is a symb
+                is_valid(): Returns true if XML object is valid `Symb`
+        """
+
         def __init__(self, element: XML.Element):
             super().__init__(element)
 
         def parse(self):
+            """
+                Returns instance of `Symb` in case if XML object is a symb
+
+                Return:
+                    Instance of `Types.Symb`, otherwise it checks for `Types.Var`
+            """
             if not self.is_valid():
                 return Parser.Var(self.element).parse()
 
             return Types.Symb(self.text, self.attr.lower())
 
         def is_valid(self):
+            """
+                Returns true if XML object is valid `Symb`. There is also
+                extra check for a specific type of a literal. Just in case.
+
+                Return:
+                    true if object is valid XML symb literal, otherwise false
+            """
             if re.search(r"^(int|bool|string|float|nil)$", self.attr) is None:
                 return False
             try:
@@ -452,10 +660,27 @@ class Parser:
                 raise Exceptions.XMLUnexpectedError(e)
 
     class Var(_GenericParseType):
+        """
+            Class that is configured to parse XML objects representing `Var` literals.
+
+            Methods:
+                parse(): Parses and returns an instance of `Types.Var`
+                is_valid(): Checks whether XML object is valid `Types.Var` literal
+        """
+
         def __init__(self, element: XML.Element):
             super().__init__(element)
 
         def parse(self):
+            """
+                Parses and returns an instance of Types.Var
+
+                Raise:
+                    TypeError: Unexpected type
+
+                Return:
+                    Instance of a Types.Var if XML is valid Var.
+            """
             if not self.is_valid():
                 raise Exceptions.TypeError("Unexpected type")
 
@@ -464,14 +689,37 @@ class Parser:
             return Types.Var(name, scope)
 
         def is_valid(self):
+            """
+                Checks whether XML object is valid Types.Var literal.
+
+                Return:
+                    true in case if XML object is valid
+            """
             return (self.attr == "var"
                     and re.search(r"^(GF|LF|TF)@[a-zA-Z_\-$&%*!?][\w\-$&%*!?]*$", self.text))
 
     class Type(_GenericParseType):
+        """
+            Class that is configured to parse types out of XML objects
+
+            Methods:
+                parse(): parses and returns instance of a Types.Type
+                is_valid(): checks if XML object is valud Type
+        """
+
         def __init__(self, element: XML.Element):
             super().__init__(element)
 
         def parse(self):
+            """
+                Parses and returns instance of a Types.Type
+
+                Raise:
+                    TypeError: Unexpected type
+
+                Return:
+                    Instance of a Types.Type
+            """
             if not self.is_valid:
                 raise Exceptions.TypeError("Unexpected type")
 
@@ -480,20 +728,50 @@ class Parser:
             return Types.Type(value)
 
         def is_valid(self):
+            """
+                Checks if XML object is valid Type.
+
+                Return:
+                    True if object is valid XML
+            """
             return (self.attr == "type"
                     and re.search(r"^(int|bool|string|float|nil)$", self.text))
 
     class Label(_GenericParseType):
+        """
+            Class that is configured to parse labels.
+
+            Methods:
+                parse(): parses XML object and returns instance of Types.Label
+                is_valid(): checks whether XML object is valid Label
+
+        """
+
         def __init__(self, element: XML.Element):
             super().__init__(element)
 
         def parse(self):
+            """
+                Parses XML object and returns instance of Types.Label
+
+                Raise:
+                    TypeError: Unexpected type
+
+                Return:
+                    Instance of Types.Label
+            """
             if not self.is_valid():
                 raise Exceptions.TypeError("Unexpected type")
 
             return Types.Label(self.text)
 
         def is_valid(self):
+            """
+                Checks whether XML object is valid Label
+
+                Return:
+                    true if the object is valid Label, otherwise - false
+            """
             return (self.attr == "label"
                     and re.search(r"^[a-zA-Z_\-$&%*!?][\w\-$&%*!?]*$", self.text))
 
@@ -526,6 +804,7 @@ EXPECTED_TYPES = {
     "ADDS": None,
     "SUBS": None,
     "MULS": None,
+    "DIVS": None,
     "IDIVS": None,
     "LTS": None,
     "GTS": None,
@@ -535,6 +814,8 @@ EXPECTED_TYPES = {
     "NOTS": None,
     "INT2CHARS": None,
     "STRI2INTS": None,
+    "INT2FLOATS": None,
+    "FLOAT2INTS": None,
 
     "JUMPIFEQS": [Parser.Label],
     "JUMPIFNEQS": [Parser.Label],
@@ -565,6 +846,12 @@ EXPECTED_TYPES = {
 
 
 class Instruction:
+    """
+        Class, that represents instruction. Its instances are created when parsing XML.
+
+        Raise:
+            XMLUnexpectedError: any operand errors
+    """
     def __init__(self, opcode: str, order: str, operands: list):
         self.opcode = opcode.upper()
         self.order = int(order)
@@ -592,13 +879,38 @@ class Instruction:
 
 
 class Frame():
+    """
+        Class that represents frames in IFJcode23.
+
+        Raise:
+            SemanticError: variable is already defined
+
+        Methods:
+            get_var(var_name): Gets variable by its name.
+            set_var(var): Declares variable in specific frame.
+    """
     def __init__(self):
         self._data = {}
 
     def get_var(self, var_name):
+        """
+            Gets variable by its name.
+
+            Params:
+                var_name: name of the variable
+
+            Return: 
+                Object of type `Types.Var`
+        """
         return self._data.get(var_name)
 
     def set_var(self, var: Types.Var):
+        """
+            Declares variable in specific frame
+
+            Params:
+                var: Object of type `Types.Var` that needs to be declared in frame
+        """
         if self.get_var(var.name) is not None:
             raise Exceptions.SemanticError(
                 f"Variable {var.name} is already defined at {var.scope}")
@@ -609,14 +921,30 @@ class Frame():
         return repr(self._data)
 
 
-# FIXME
 class FrameManager():
+    """
+        Class for managing memory model in IFJcode23.
+
+        Methods:
+            set_var(var): Declares variable in specific frame
+            get_var(var): Returns var out of specific frame
+            create_frame(): Creates frame TF
+            push_frame(): Moves TF onto LF
+            pop_frame(): Moves LF onto TF
+    """
     def __init__(self):
         self._gframe = Frame()
         self._lframe = []
         self._tframe = None
 
     def set_var(self, var: Types.Var):
+        """
+            Declares variable in specific frame.
+
+            Raise:
+                FrameError: frame is not defined
+                InternalError: undefined frame
+        """
         if var.scope == FrameTypes.GF:
             self._gframe.set_var(var)
         elif var.scope == FrameTypes.TF:
@@ -632,12 +960,24 @@ class FrameManager():
                 f"Something went wrong. Checkout set_var() in FrameManager")
 
     def get_var(self, var: Types.Var) -> Types.Var:
+        """
+            Returns var out of specific frame.
+
+            Raise:
+                FrameError: Frame does not exist.
+                VariableUndefinedError: Variable is not defined.
+
+            Return:
+                Instance of `Types.Var`
+        """
 
         if var.scope == FrameTypes.TF:
             if self._tframe is None:
-                raise Exceptions.FrameError("TF is not defined")
+                raise Exceptions.FrameError("Frame TF does not exist.")
             _var = self._tframe.get_var(var.name)
         elif var.scope == FrameTypes.LF:
+            if len(self._lframe) == 0:
+                raise Exceptions.FrameError("Frame LF does not exist.")
             _var = self._lframe[-1].get_var(var.name)
         elif var.scope == FrameTypes.GF:
             _var = self._gframe.get_var(var.name)
@@ -649,15 +989,30 @@ class FrameManager():
             return _var
 
     def create_frame(self):
+        """
+            Creates frame TF
+        """
         self._tframe = Frame()
 
     def push_frame(self):
+        """
+            Moves TF onto LF
+
+            Raise:
+                FrameError: TF is not defined
+        """
         if self._tframe is None:
             raise Exceptions.FrameError(f"Unable to push undefined TF to LF")
         self._lframe.append(self._tframe)
         self._tframe = None
 
     def pop_frame(self):
+        """
+            Moves LF onto TF
+
+            Raise:
+                FrameError: LF is not defined
+        """
         if len(self._lframe) == 0:
             raise Exceptions.FrameError(f"Unable to pop LF when it is empty")
         self._tframe = self._lframe.pop()
@@ -667,6 +1022,12 @@ class FrameManager():
 
 
 class StackManager():
+    """
+        Class for managing data stack
+
+        Methods:
+            Instruction implementation.
+    """
     def __init__(self):
         self._data = []
 
@@ -676,7 +1037,7 @@ class StackManager():
     def pop(self) -> Types.Symb:
         if self.is_empty():
             raise Exceptions.ValueUndefinedError("Data stack is empty")
-        return self._data.pop()  # FIXME Raise error
+        return self._data.pop()
 
     def get_symb(self):
         if len(self._data) < 1:
@@ -697,48 +1058,43 @@ class StackManager():
         self._data = []
 
     def add(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1+symb2)
 
     def sub(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1-symb2)
 
     def mul(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1*symb2)
 
+    def div(self):
+        symb1, symb2 = self.pop_symb_symb()
+        self.push(symb1/symb2)
+
     def idiv(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1//symb2)
 
     def lt(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1 < symb2)
 
     def gt(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1 > symb2)
 
     def eq(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1 == symb2)
 
     def ands(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1 & symb2)
 
     def ors(self):
-        symb2 = self.pop()
-        symb1 = self.pop()
+        symb1, symb2 = self.pop_symb_symb()
         self.push(symb1 | symb2)
 
     def nots(self):
@@ -758,7 +1114,30 @@ class StackManager():
 
     def stri2int(self):
         symb1, symb2 = self.pop_symb_symb()
-        self.push(Types.Symb.Int(ord(symb1[symb2].value)))  # FIXME
+        self.push(Types.Symb.Int(ord(symb1[symb2].value)))
+
+    def int2float(self):
+        symb1 = self.pop()
+        if symb1.type.is_nil():
+            raise Exceptions.ValueUndefinedError(
+                "Cannot convert NIL to FLOAT")
+        if not symb1.type.is_int():
+            raise Exceptions.TypeError(
+                "Invalid type in convert")
+
+        self.push(Types.Symb.Float(symb1.value))
+
+    def float2int(self):
+        symb1 = self.pop()
+
+        if symb1.type.is_nil():
+            raise Exceptions.ValueUndefinedError(
+                "Cannot convert NIL to INT")
+        if not symb1.type.is_float():
+            raise Exceptions.TypeError(
+                "Invalid type in convert")
+
+        self.push(Types.Symb.Int(int(symb1.value)))
 
     def is_empty(self):
         return len(self._data) == 0
@@ -786,9 +1165,10 @@ def _write(symb: Types.Symb, file=sys.stdout):
         matches = re.findall(r"\\[\d]{3}", str(value))
         for match in matches:
             value = value.replace(match, chr(int(match[1:])))
-        print(value, end="",file=file)
+        print(value, end="", file=file)
     else:
         print(symb, end="", file=file)
+
 
 class InstructionManager():
 
@@ -803,25 +1183,48 @@ class InstructionManager():
 
 
 class CallStack():
+    """
+        Class for managing CALL and RETURN instructions. It stores indexes of Calls.
+
+        Methods:
+            push(label): Saves index of specific label in order to return back to it
+            pop(): Pops saved index
+            is_empty(): Checks if call stack is empty
+    """
     def __init__(self):
         self._calls = []
 
     def push(self, label):
+        """
+            Saves index of specific label in order to return back to it
+        """
         self._calls.append(label)
 
     def pop(self):
+        """
+            Pops saved index.
+
+            Raise:
+                ValueUndefinedError: Call stack is empty
+        """
         if self.is_empty():
             raise Exceptions.ValueUndefinedError("Call stack is empty")
         return self._calls.pop()
 
     def is_empty(self):
+        """
+            Checks if call stack is empty
+        """
         return len(self._calls) == 0
+
+    def __repr__(self):
+        return f"Call stack: {self._calls}"
 
 
 def main():
 
-    source = None
-    input = None
+    source = None #XML file with source code
+    input = None #input file
 
     try:
 
@@ -833,13 +1236,16 @@ def main():
 
         for opt, arg in opts:
             if opt in ('-h', '--help'):
-                raise Exceptions.Usage()
+                if len(opts) > 1:
+                    raise Exceptions.OptionError(
+                        "Option --help(-h) can only be used without any other options)")
+                print(USAGE)
+                exit(0)
             elif opt in ('-s', '--source'):
                 source = arg
             elif opt in ('-i', '--input'):
                 input = arg
 
-        # FIXME stdin fix Kambulat idea
         if source is None:
             source = sys.stdin
 
@@ -886,7 +1292,7 @@ def main():
                         f"Label {label.value} is already defined")
 
         idx = 0
-        # REVIEW at this point instructions are validated
+
         while idx < len(instructions):
             instruction = instructions[idx]
 
@@ -910,7 +1316,10 @@ def main():
                     symb = FManager.get_var(symb)
                 _write(symb, file=sys.stderr)
             elif instruction.opcode == "BREAK":
-                pass #FIXME add functionality
+                print(instruction.order, end="", file=sys.stderr)
+                print(FManager, end="", file=sys.stderr)
+                print(SManager, end="", file=sys.stderr)
+                print(CStack, end="", file=sys.stderr)
             elif instruction.opcode == "READ":
                 var, _type = instruction.operands
                 try:
@@ -1176,6 +1585,8 @@ def main():
                 SManager.sub()
             elif instruction.opcode == "MULS":
                 SManager.mul()
+            elif instruction.opcode == "DIVS":
+                SManager.div()
             elif instruction.opcode == "IDIVS":
                 SManager.idiv()
             elif instruction.opcode == "LTS":
@@ -1194,6 +1605,10 @@ def main():
                 SManager.int2char()
             elif instruction.opcode == "STRI2INTS":
                 SManager.stri2int()
+            elif instruction.opcode == "FLOAT2INTS":
+                SManager.float2int()
+            elif instruction.opcode == "INT2FLOATS":
+                SManager.int2float()
             elif instruction.opcode == "CONCAT":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
@@ -1202,7 +1617,8 @@ def main():
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
                 if not symb1.type.is_string() or not symb2.type.is_string():
-                    raise Exceptions.TypeError("Both operands must be of type string in CONCAT")
+                    raise Exceptions.TypeError(
+                        "Both operands must be of type string in CONCAT")
                 var.set_symb(Types.Symb.String(symb1.value + symb2.value))
             elif instruction.opcode == "STRLEN":
                 var, symb1 = instruction.operands
@@ -1267,8 +1683,7 @@ def main():
             Exceptions.StringOperationError,
             Exceptions.ValueUndefinedError,
             Exceptions.VariableUndefinedError,
-            Exceptions.InternalError,
-            Exceptions.Usage) as e:
+            Exceptions.InternalError) as e:
         Exceptions.exit(e)
 
 
