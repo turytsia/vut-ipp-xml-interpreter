@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Test results">
+    <style>
+    th, td { padding-left:10px; padding-right:10px; color:white; }
+    h1,h2,h3,h4 { color:white; }
+    textarea { background-color: rgb(18, 18, 18); color:white; }
+    body { padding-left: 1em; padding-right: 1em; background-color: rgb(18, 18, 18); }
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Test result</h1>
+    <h2>Tests run: 146</h2>
+    <h2>Passed: 142 </h2>
+    <h2>Failed: 4 </h2>
+    <hr>
+    <h3 style="text-align: center; color:red">Failed tests</h3><hr><h4>tests/interpret-only/passed/string_tests</h4><table><tr><th>Test name</th><th>Return code</th><th>Expected return code</th><th>Output</th><th>Expected output</th></tr>
+<tr><td>setchar_test</td><td>0</td><td>0</td><td><textarea readonly rows=5 cols=50>glope</textarea></td><td><textarea readonly rows=5 cols=50>glove</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/stack_tests</h4><table><tr><th>Test name</th><th>Return code</th><th>Expected return code</th><th>Output</th><th>Expected output</th></tr>
+<tr><td>stack_eqs_differenttype</td><td>53</td><td>53
+</td><td><textarea readonly rows=5 cols=50></textarea></td><td><textarea readonly rows=5 cols=50>false</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/sigma</h4><table><tr><th>Test name</th><th>Return code</th><th>Expected return code</th><th>Output</th><th>Expected output</th></tr>
+<tr><td>big-dick-test</td><td>0</td><td>0</td><td><textarea readonly rows=5 cols=50>ifj-raytracer, vykresli 3 koule
++----------------------------------------------------------------------+
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                                                      |
++----------------------------------------------------------------------+</textarea></td><td><textarea readonly rows=5 cols=50>16411811
+58
+</textarea></td></tr>
+
+<tr><td>huge-dick-test</td><td>0</td><td>0</td><td><textarea readonly rows=5 cols=50>ifj-raytracer, vykresli 3 koule
++----------------------------------------------------------------------+
+|                                                                      |
+|                                                                      |
+|                                                                      |
+|                                    .-----                            |
+|                                 .-----+++---                         |
+|                               .----+++++++++--                       |
+|                              .---+++++++++++++-                      |
+|                             .---++++********++++                     |
+|                            .---++++***********+++                    |
+|                           .---++++*************+++                   |
+|                          ..--++++***************++-                  |
+|                          .---+++*******#####*****++-                 |
+|                    .......--+++*******#######*****++                 |
+|                ..------ .---+++******#########****++-                |
+|              ..-----+++..--++++*****###########****+-                |
+|             .----+++++ ..--+++******###########****++.               |
+|           ..----++++++ .---+++*****#############***++-               |
+|          ..---+++++++* .---+++*****#############****+-               |
+|         ..---++++++*** .---+++*****#############****++               |
+|        ..---+++++**** ..---+++*****#############****++.              |
+|        .---+++++***** ..---+++*****#############****++-              |
+|       ..---++++****** ..---+++******############****++-              |
+|      ..---++++******* ..---+++******############****++-              |
+|      ..--+++++******* ..---++++******##########*****++-              |
+|     ..---++++********  .---++++*******#########****+++-              |
+|     ..---++++*******#  ..--++++********#######*****++-.              |
+|     .---++++*******##  ..---++++*********##********++-.              |
+|    ..---++++*******##  ..---++++******************+++-               |
+|    ..---++++******#### ...---++++****************.-+++++++           |
+|    ..---++++******####  ..---+++++**************-+++******+-         |
+|    ..--+++++******####  ..----+++++************-++*********++        |
+|   ..---++++*******####   ..----++++++*********-++***********++       |
+|   ..---++++*******#####  ...---++++++++*****+--++****#####***++      |
+|   ..---++++*******#####   ..----++++++++++++.-++****#######***+-     |
+|   ..---+++++******######  ...-----++++++++++.-++***#########***+     |
+|   ..---+++++*******#####   ...-----++++++++.--++***#########***+-    |
+|   ..---+++++*******######   ...-------+++++.-+++***##########**+-    |
+|   ..----++++*******#######   ...-----------.-+++***##########**++    |
+|   ..----++++********#######   ....-------- .-+++***#########***++    |
+|   ...---+++++********#######   ......----- .-+++****########***++-   |
+|    ..---+++++*********#######    ......... .--++*****#######***++-   |
+|    ..----+++++***********###**     ....... .--+++*****#####****++-   |
+|    ..----+++++******************           .--+++**************++-   |
+|    ...---++++++*********************    -  ..--+++************++-.   |
+|     ..----++++++*******************++++-.   .--++++**********+++-.   |
+|     ...---+++++++*****************++++--.   .---++++********+++--    |
+|     ...----+++++++***************+++++--    ..---+++++****+++++-.    |
+|      ...----+++++++*************+++++--.     ..---++++++++++++--.    |
+|      ...-----++++++++*********++++++---       ..---++++++++++--.     |
+|       ...-----+++++++++++++++++++++---.       ...----++++++---..     |
+|       ....-----+++++++++++++++++++---.         ...-----------..      |
+|        ...------+++++++++++++++++---..          ....-------...       |
+|         ...-------+++++++++++++----..             ..........         |
+|          ...--------+++++++++-----..                ......           |
+|           ....-------------------..                                  |
+|            ....-----------------..                                   |
+|             .....-------------...                                    |
++----------------------------------------------------------------------+</textarea></td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h3 style="text-align: center; color:green">Passed tests</h3><hr><h4>tests/interpret-only/passed/xml_structure</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>arg_order1</td><td>0</td><td><textarea readonly rows=5 cols=50>Hello</textarea></td></tr>
+
+<tr><td>arg_quantity1</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>arg_quantity2</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>arg_quantity3</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>duplicate_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>instruction_order1</td><td>0</td><td><textarea readonly rows=5 cols=50>Hello</textarea></td></tr>
+
+<tr><td>negative_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>space_order</td><td>0</td><td><textarea readonly rows=5 cols=50>Hello</textarea></td></tr>
+
+<tr><td>wrong_language</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>wrong_opcode</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>wrong_tag1</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>wrong_tag2</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>xml_format1</td><td>31</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>xml_fromat2</td><td>31</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>zero_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/valid</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>all_program_attributes</td><td>0</td><td><textarea readonly rows=5 cols=50>0</textarea></td></tr>
+
+<tr><td>defvar_move</td><td>0</td><td><textarea readonly rows=5 cols=50>42</textarea></td></tr>
+
+<tr><td>dprint</td><td>0</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>exit</td><td>42</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>label_call_return</td><td>0</td><td><textarea readonly rows=5 cols=50>Oh,yeah,motherfucker!</textarea></td></tr>
+
+<tr><td>read</td><td>0</td><td><textarea readonly rows=5 cols=50>42just a string!true</textarea></td></tr>
+
+<tr><td>stack_test</td><td>0</td><td><textarea readonly rows=5 cols=50>ahoj světe</textarea></td></tr>
+
+<tr><td>type</td><td>0</td><td><textarea readonly rows=5 cols=50>int</textarea></td></tr>
+
+<tr><td>write</td><td>0</td><td><textarea readonly rows=5 cols=50>0abc</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/valid/order</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>discontinuously_ordered_instructions</td><td>0</td><td><textarea readonly rows=5 cols=50>21cd0abf</textarea></td></tr>
+
+<tr><td>unordered_instructions</td><td>0</td><td><textarea readonly rows=5 cols=50>21cd0abf</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/string_tests</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>bad_args_setchar_test</td><td>58</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>bad_concat_test</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>bad_dest_setchar_test</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>bad_getchar_test</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>bad_strlen_test</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>concat_test</td><td>0</td><td><textarea readonly rows=5 cols=50>pacany vashe rebyata</textarea></td></tr>
+
+<tr><td>getchar_test</td><td>0</td><td><textarea readonly rows=5 cols=50>n</textarea></td></tr>
+
+<tr><td>strlen_test</td><td>0</td><td><textarea readonly rows=5 cols=50>4</textarea></td></tr>
+
+<tr><td>too_big_index_getchar_test</td><td>58</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/stack_tests</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>stack_adds</td><td>0</td><td><textarea readonly rows=5 cols=50>03</textarea></td></tr>
+
+<tr><td>stack_adds_notint</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_ands</td><td>0</td><td><textarea readonly rows=5 cols=50>truefalsefalsefalse</textarea></td></tr>
+
+<tr><td>stack_ands_notbool</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_clears</td><td>56</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_eqs</td><td>0</td><td><textarea readonly rows=5 cols=50>truetruefalsetruetruefalsefalsefalse</textarea></td></tr>
+
+<tr><td>stack_eqs_differenttype_nil</td><td>0</td><td><textarea readonly rows=5 cols=50>false</textarea></td></tr>
+
+<tr><td>stack_eqs_nil</td><td>0</td><td><textarea readonly rows=5 cols=50>falsetrue</textarea></td></tr>
+
+<tr><td>stack_gts</td><td>0</td><td><textarea readonly rows=5 cols=50>falsefalsefalsefalsefalsetruetruetrue</textarea></td></tr>
+
+<tr><td>stack_gts_differenttype</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_gts_nil</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_idivs</td><td>0</td><td><textarea readonly rows=5 cols=50>-21</textarea></td></tr>
+
+<tr><td>stack_idivs_notint</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_int2chars</td><td>0</td><td><textarea readonly rows=5 cols=50>E</textarea></td></tr>
+
+<tr><td>stack_int2chars_notnumber</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_int2chars_wrongnumber</td><td>58</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_bool</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_differenttype</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_differenttype_nil</td><td>0</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_int</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_nil</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifeqs_string</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifneqs_bool</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifneqs_differenttype</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_jumpifneqs_differenttype_nil</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifneqs_int</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_jumpifneqs_string</td><td>0</td><td><textarea readonly rows=5 cols=50>noice</textarea></td></tr>
+
+<tr><td>stack_lts</td><td>0</td><td><textarea readonly rows=5 cols=50>truetruetruefalsefalsefalsefalsefalse</textarea></td></tr>
+
+<tr><td>stack_lts_differenttype</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_lts_nil</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_muls</td><td>0</td><td><textarea readonly rows=5 cols=50>-166</textarea></td></tr>
+
+<tr><td>stack_muls_notint</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_nots</td><td>0</td><td><textarea readonly rows=5 cols=50>falsetrue</textarea></td></tr>
+
+<tr><td>stack_nots_notbool</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_ors</td><td>0</td><td><textarea readonly rows=5 cols=50>truetruetruefalse</textarea></td></tr>
+
+<tr><td>stack_ors_notbool</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_stri2ints</td><td>0</td><td><textarea readonly rows=5 cols=50>69</textarea></td></tr>
+
+<tr><td>stack_stri2ints_notnumber</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_stri2ints_notstring</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_stri2ints_outofbounds</td><td>58</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stack_subs</td><td>0</td><td><textarea readonly rows=5 cols=50>8-1</textarea></td></tr>
+
+<tr><td>stack_subs_notint</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/stack_tests/stack_calc</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>kalkulacka_STACK_rozsireni</td><td>0</td><td><textarea readonly rows=5 cols=50>Zadejte vaši operaci (+,-,*,/) nebo e pro ukončení:Zadejte číslo 1:
+Zadejte číslo 2:
+Váš výsledek: 26
+Zadejte vaši operaci (+,-,*,/) nebo e pro ukončení:Zadejte číslo 1:
+Zadejte číslo 2:
+Váš výsledek: 12
+Zadejte vaši operaci (+,-,*,/) nebo e pro ukončení:Zadejte číslo 1:
+Zadejte číslo 2:
+Váš výsledek: 30
+Zadejte vaši operaci (+,-,*,/) nebo e pro ukončení:Zadejte číslo 1:
+Zadejte číslo 2:
+Váš výsledek: 5
+Zadejte vaši operaci (+,-,*,/) nebo e pro ukončení:</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/jumps</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>duplicateLabel</td><td>52</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>jumpForward</td><td>0</td><td><textarea readonly rows=5 cols=50>did jump</textarea></td></tr>
+
+<tr><td>jumpifeq</td><td>0</td><td><textarea readonly rows=5 cols=50>5</textarea></td></tr>
+
+<tr><td>nonexistLabel</td><td>52</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/frames</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>defvarnoTF</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>popEmpty</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>pushEmpty</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>secondLF</td><td>0</td><td><textarea readonly rows=5 cols=50>510510</textarea></td></tr>
+
+<tr><td>TFafterPush</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/float_tests</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>float_accepted_numbers</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.0000000000000p+0-0x1.0000000000000p+00x1.0000000000000p+00x1.0000000000000p+00x1.0000000000000p+00x1.0000000000000p+00x1.0000000000000p-10x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_accepted_numbers2</td><td>0</td><td><textarea readonly rows=5 cols=50>-0x1.0000000000000p+00x1.0000000000000p+0-0x1.0000000000000p+0-0x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_accepted_numbers3</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.0000000000000p+00x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_accepted_numbers4</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.0000000000000p+00x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_accepted_numbers5</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.0000000000000p+00x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_accepted_numbers6</td><td>0</td><td><textarea readonly rows=5 cols=50>-0x1.175c57117ca21p+270x1.0000000000000p-4</textarea></td></tr>
+
+<tr><td>float_add_float_float</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.2000000000000p+1</textarea></td></tr>
+
+<tr><td>float_add_float_int</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_div_float_float</td><td>0</td><td><textarea readonly rows=5 cols=50>-0x1.0000000000000p+0</textarea></td></tr>
+
+<tr><td>float_div_float_int</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_div_zero</td><td>57</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int</td><td>0</td><td><textarea readonly rows=5 cols=50>2</textarea></td></tr>
+
+<tr><td>float_float2int_undefined_frame</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_undefined_frame2</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_undefined_var</td><td>54</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_undefined_var2</td><td>54</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_uninicialized_variable</td><td>56</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_wrong_operand</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_float2int_wrong_operand2</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.0000000000000p+1</textarea></td></tr>
+
+<tr><td>float_int2float_undefined_frame</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_undefined_frame2</td><td>55</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_undefined_var</td><td>54</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_undefined_var2</td><td>54</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_uninicialized_variable</td><td>56</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_wrong_operand</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_int2float_wrong_operand2</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_move</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.2000000000000p+0</textarea></td></tr>
+
+<tr><td>float_move2</td><td>0</td><td><textarea readonly rows=5 cols=50>-0x1.175c57117ca21p+27</textarea></td></tr>
+
+<tr><td>float_mul_float_float</td><td>0</td><td><textarea readonly rows=5 cols=50>-0x1.4400000000000p+0</textarea></td></tr>
+
+<tr><td>float_mul_float_int</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_pushs</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.2000000000000p+0</textarea></td></tr>
+
+<tr><td>float_read</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.2000000000000p+0</textarea></td></tr>
+
+<tr><td>float_read_wrongfloat</td><td>0</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_sub_float_float</td><td>0</td><td><textarea readonly rows=5 cols=50>0x0.0p+0</textarea></td></tr>
+
+<tr><td>float_sub_float_int</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>float_tf_lf</td><td>0</td><td><textarea readonly rows=5 cols=50>0x1.2000000000000p+00x1.2000000000000p+0</textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/arithmetic</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>correct</td><td>0</td><td><textarea readonly rows=5 cols=50>3</textarea></td></tr>
+
+<tr><td>incorrectInt</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>negativeNum</td><td>0</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>nil</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>stringAdd</td><td>53</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>zeroDiv</td><td>57</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/32</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>bad_argument_tag</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>bad_root_element</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>duplicit_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>missing_argument</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>missing_opcode</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>missing_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>negative_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>string_order</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>unknown_element</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>unknown_element2</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+<tr><td>write_test</td><td>32</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+<hr><h4>tests/interpret-only/passed/31</h4><table><tr><th>Test name</th><th>Return code</th><th>Output</th></tr>
+<tr><td>fucked_up_xml</td><td>31</td><td><textarea readonly rows=5 cols=50></textarea></td></tr>
+
+</table>
+</body></html>

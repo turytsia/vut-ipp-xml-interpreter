@@ -132,6 +132,17 @@ class FrameTypes(Enum):
     GF = 3
 
 
+def deescape_str(s: str):
+    try:
+        res = s
+        matches = re.findall(r"\\[\d]{3}", s)
+        for match in matches:
+            res = res.replace(match, chr(int(match[1:])))
+        return res
+    except ValueError as e:
+        raise Exceptions.StringOperationError(e)
+
+
 class Types:
     """
         Class, that implements all the typing dependencies and methods.
@@ -168,10 +179,15 @@ class Types:
                     if type(value) == bool:
                         self.value = value
                     else:
-                        self.value = True if value == "true" else False
+                        if value.lower() == "true":
+                            self.value = True
+                        else:
+                            self.value = False
                 elif self.type.is_float():
                     self.value = float.fromhex(value) if type(
                         value) == str else value
+                elif self.type.is_string():
+                    self.value = "" if value is None else value
                 else:
                     self.value = value
             except ValueError:
@@ -213,56 +229,78 @@ class Types:
             """
             return cls(value, Types.Type.Nil())
 
+        @classmethod
+        def Undef(cls, value):
+            """
+                Creates instance of Symb with type nil
+            """
+            return cls(value, Types.Type.Undef())
+
         def __gt__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
                 if self.type.is_nil() or other.type.is_nil():
-                    raise Exceptions.TypeError(f"GT doesn't support NIL")
+                    raise Exceptions.TypeError("GT doesn't support NIL")
                 if self.type != other.type:
                     raise Exceptions.TypeError("Incompatible types in LT")
-                return Types.Symb.Bool(self.value > other.value)
+                if self.type.is_string():
+                    return Types.Symb.Bool(deescape_str(str(self.value)) > deescape_str(str(other.value)))
+                else:
+                    return Types.Symb.Bool(self.value > other.value)
             return NotImplemented
 
         def __lt__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
                 if self.type.is_nil() or other.type.is_nil():
-                    raise Exceptions.TypeError(f"LT doesn't support NIL")
+                    raise Exceptions.TypeError("LT doesn't support NIL")
                 if self.type != other.type:
                     raise Exceptions.TypeError("Incompatible types in LT")
-                return Types.Symb.Bool(self.value < other.value)
+                if self.type.is_string():
+                    return Types.Symb.Bool(deescape_str(str(self.value)) < deescape_str(str(other.value)))
+                else:
+                    return Types.Symb.Bool(self.value < other.value)
             return NotImplemented
 
+        def __bool__(self):
+            return bool(self.value)
+
         def __eq__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
                 if (self.type != other.type and
                         not self.type.is_nil() and not other.type.is_nil()):
                     raise Exceptions.TypeError(
-                        f"Operands must be of the same type")
-                return Types.Symb.Bool(self.value == other.value)
+                        "Operands must be of the same type")
+                if self.type.is_string():
+                    return Types.Symb.Bool(deescape_str(str(self.value)) == deescape_str(str(other.value)))
+                else:
+                    return Types.Symb.Bool(self.value == other.value)
             return NotImplemented
 
         def __invert__(self):
             if not self.type.is_bool():
-                raise Exceptions.TypeError(f"AND/OR/NOT supports bool only")
+                raise Exceptions.TypeError("AND/OR/NOT supports bool only")
             return Types.Symb.Bool(not self.value)
 
         def __and__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
                 if not self.type.is_bool() or not other.type.is_bool():
                     raise Exceptions.TypeError(
-                        f"AND/OR/NOT supports bool only")
+                        "AND/OR/NOT supports bool only")
                 return Types.Symb.Bool(self.value and other.value)
             return NotImplemented
 
         def __or__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
                 if not self.type.is_bool() or not other.type.is_bool():
                     raise Exceptions.TypeError(
-                        f"AND/OR/NOT supports bool only")
+                        "AND/OR/NOT supports bool only")
                 return Types.Symb.Bool(self.value or other.value)
             return NotImplemented
 
         def __add__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
+
+                if other.type.is_nil() and isinstance(other, Types.Var):
+                    raise Exceptions.ValueUndefinedError("Missing value")
                 if not (self.type.is_int() and other.type.is_int()
                         or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
@@ -274,7 +312,10 @@ class Types:
             return NotImplemented
 
         def __sub__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
+
+                if other.type.is_nil() and isinstance(other, Types.Var):
+                    raise Exceptions.ValueUndefinedError("Missing value")
                 if not (self.type.is_int() and other.type.is_int()
                         or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
@@ -286,7 +327,10 @@ class Types:
             return NotImplemented
 
         def __mul__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
+
+                if other.type.is_nil() and isinstance(other, Types.Var):
+                    raise Exceptions.ValueUndefinedError("Missing value")
                 if not (self.type.is_int() and other.type.is_int()
                         or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
@@ -298,7 +342,9 @@ class Types:
             return NotImplemented
 
         def __floordiv__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
+                if other.type.is_nil() and isinstance(other, Types.Var):
+                    raise Exceptions.ValueUndefinedError("Missing value")
                 if not (self.type.is_int() and other.type.is_int()):
                     raise Exceptions.TypeError(
                         f"Incompatible types of {other} and {self}")
@@ -309,7 +355,10 @@ class Types:
             return NotImplemented
 
         def __truediv__(self, other: 'Types.Symb'):
-            if isinstance(other, Types.Var) or isinstance(other, Types.Symb):
+            if isinstance(other, (Types.Var, Types.Symb)):
+
+                if other.type.is_nil() and isinstance(other, Types.Var):
+                    raise Exceptions.ValueUndefinedError("Missing value")
                 if not (self.type.is_int() and other.type.is_int()
                         or self.type.is_float() and other.type.is_float()):
                     raise Exceptions.TypeError(
@@ -330,6 +379,9 @@ class Types:
             if not self.type.is_string():
                 raise Exceptions.TypeError(
                     "Expected string")
+            if arg.value < 0:
+                raise Exceptions.StringOperationError(
+                    "Index can't be negative")
             try:
                 return Types.Symb.String(self.value[arg.value])
             except IndexError:
@@ -340,7 +392,8 @@ class Types:
                 return "true" if self.value else "false"
             if self.type.is_float():
                 return float.hex(float(self.value))
-            return str(self.value) if not self.type.is_nil() else ""
+
+            return str(self.value) if not self.type.is_nil() and not self.type.is_undef() else ""
 
         def __repr__(self):
             return f"SYMB({self.type}, {self.value})"
@@ -369,7 +422,7 @@ class Types:
         def to_scope(self, scope: str):
             """
                 Converts 'TF'|'LF'|'GF' to a specific type.
-                
+
                 Raise:
                     InternalError: if given type of frame is not valid.
 
@@ -413,6 +466,7 @@ class Types:
             BOOL = "bool"
             FLOAT = "float"
             NIL = "nil"
+            UNDEF = "undef"
 
         def __init__(self, value: 'Types.Type._SymbTypes'):
             self.value = value
@@ -468,6 +522,13 @@ class Types:
             """
             return cls(cls._SymbTypes.NIL)
 
+        @classmethod
+        def Undef(cls):
+            """
+                Creates instance of Type nil
+            """
+            return cls(cls._SymbTypes.UNDEF)
+
         def is_int(self):
             """
                 Checks if type is integer
@@ -497,6 +558,12 @@ class Types:
                 Checks if type is nil
             """
             return self.value == Types.Type._SymbTypes.NIL
+
+        def is_undef(self):
+            """
+                Checks if type is nil
+            """
+            return self.value == Types.Type._SymbTypes.UNDEF
 
         @staticmethod
         def to_type(_type: str) -> 'Types.Type':
@@ -723,9 +790,7 @@ class Parser:
             if not self.is_valid:
                 raise Exceptions.TypeError("Unexpected type")
 
-            value = Types.Type.to_type(self.text.lower())
-
-            return Types.Type(value)
+            return Types.Type.to_type(self.text.lower())
 
         def is_valid(self):
             """
@@ -852,6 +917,7 @@ class Instruction:
         Raise:
             XMLUnexpectedError: any operand errors
     """
+
     def __init__(self, opcode: str, order: str, operands: list):
         self.opcode = opcode.upper()
         self.order = int(order)
@@ -889,6 +955,7 @@ class Frame():
             get_var(var_name): Gets variable by its name.
             set_var(var): Declares variable in specific frame.
     """
+
     def __init__(self):
         self._data = {}
 
@@ -915,6 +982,7 @@ class Frame():
             raise Exceptions.SemanticError(
                 f"Variable {var.name} is already defined at {var.scope}")
 
+        var.type = Types.Type.Undef()
         self._data[var.name] = var
 
     def __repr__(self):
@@ -932,6 +1000,7 @@ class FrameManager():
             push_frame(): Moves TF onto LF
             pop_frame(): Moves LF onto TF
     """
+
     def __init__(self):
         self._gframe = Frame()
         self._lframe = []
@@ -1028,6 +1097,7 @@ class StackManager():
         Methods:
             Instruction implementation.
     """
+
     def __init__(self):
         self._data = []
 
@@ -1161,11 +1231,7 @@ def read_input_generator(filename=None):
 
 def _write(symb: Types.Symb, file=sys.stdout):
     if symb.type.is_string():
-        value = symb.value
-        matches = re.findall(r"\\[\d]{3}", str(value))
-        for match in matches:
-            value = value.replace(match, chr(int(match[1:])))
-        print(value, end="", file=file)
+        print(deescape_str(str(symb.value)), end="", file=file)
     else:
         print(symb, end="", file=file)
 
@@ -1191,6 +1257,7 @@ class CallStack():
             pop(): Pops saved index
             is_empty(): Checks if call stack is empty
     """
+
     def __init__(self):
         self._calls = []
 
@@ -1223,8 +1290,8 @@ class CallStack():
 
 def main():
 
-    source = None #XML file with source code
-    input = None #input file
+    source = None  # XML file with source code
+    input = None  # input file
 
     try:
 
@@ -1309,6 +1376,9 @@ def main():
                 symb, = instruction.operands
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 _write(symb)
             elif instruction.opcode == "DPRINT":
                 symb, = instruction.operands
@@ -1322,25 +1392,42 @@ def main():
                 print(CStack, end="", file=sys.stderr)
             elif instruction.opcode == "READ":
                 var, _type = instruction.operands
+                
                 try:
                     var = FManager.get_var(var)
-                    var.set_symb(Types.Symb(
-                        next(input), Types.Type.to_type(_type.value)))
-                except StopIteration:
+                    value = next(input)
+                    if _type.is_int():
+                        int(value)
+                        
+                    var.set_symb(Types.Symb(value, _type))
+                except (ValueError, StopIteration):
                     var.set_symb(Types.Symb.Nil(None))
             elif instruction.opcode == "MOVE":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 var.set_symb(symb)
             elif instruction.opcode == "ADD":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
 
                 var.set_symb(symb1 + symb2)
             elif instruction.opcode == "SUB":
@@ -1348,8 +1435,18 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
 
                 var.set_symb(symb1 - symb2)
             elif instruction.opcode == "MUL":
@@ -1357,8 +1454,18 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
 
                 var.set_symb(symb1 * symb2)
             elif instruction.opcode == "IDIV":
@@ -1366,8 +1473,18 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
 
                 var.set_symb(symb1 // symb2)
             elif instruction.opcode == "DIV":
@@ -1375,14 +1492,27 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
 
                 var.set_symb(symb1 / symb2)
             elif instruction.opcode == "EXIT":
                 symb, = instruction.operands
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not symb.type.is_int():
                     raise Exceptions.TypeError(
                         "EXIT accepts only integer")
@@ -1395,7 +1525,7 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
-                if symb.type.is_nil():
+                if symb.type.is_undef():
                     var.set_symb(Types.Symb.Nil(None))
                 else:
                     var.set_symb(Types.Symb.String(str(symb.type)))
@@ -1404,8 +1534,14 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 var.set_symb(symb1 < symb2)
 
             elif instruction.opcode == "GT":
@@ -1413,8 +1549,14 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 var.set_symb(symb1 > symb2)
 
             elif instruction.opcode == "EQ":
@@ -1422,26 +1564,94 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 var.set_symb(symb1 == symb2)
+
+            elif instruction.opcode == "AND":
+                var, symb1, symb2 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
+                if isinstance(symb2, Types.Var):
+                    symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
+                var.set_symb(symb1 & symb2)
+
+            elif instruction.opcode == "OR":
+                var, symb1, symb2 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
+                if isinstance(symb2, Types.Var):
+                    symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb2.type.is_nil():
+                        raise Exceptions.ValueUndefinedError("Missing value")
+                var.set_symb(symb1 | symb2)
+
+            elif instruction.opcode == "NOT":
+                var, symb1 = instruction.operands
+                var = FManager.get_var(var)
+                if isinstance(symb1, Types.Var):
+                    symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
+                    if symb1.type.is_nil():
+                        raise Exceptions.TypeError("Missing value")
+                var.set_symb(~symb1)
 
             elif instruction.opcode == "INT2CHAR":
                 var, symb = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not symb.type.is_int():
                     raise Exceptions.TypeError(
                         "Invalid type in INT2CHAR")
-                var.set_symb(Types.Symb.String(chr(symb.value)))
+                try:
+                    var.set_symb(Types.Symb.String(chr(symb.value)))
+                except ValueError as e:
+                    raise Exceptions.StringOperationError(e)
             elif instruction.opcode == "STRI2INT":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
 
                 var.set_symb(Types.Symb.Int(ord(symb1[symb2].value)))
 
@@ -1450,6 +1660,9 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                     if symb.type.is_nil():
                         raise Exceptions.ValueUndefinedError(
                             "Cannot convert NIL to FLOAT")
@@ -1463,6 +1676,9 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                     if symb.type.is_nil():
                         raise Exceptions.ValueUndefinedError(
                             "Cannot convert NIL to INT")
@@ -1486,7 +1702,6 @@ def main():
                 if jump_to is None:
                     raise Exceptions.SemanticError(
                         f"Label {label.value} is undefined")
-                CStack.push(idx)
                 idx = jump_to
             elif instruction.opcode == "JUMP":
                 label, = instruction.operands
@@ -1510,10 +1725,16 @@ def main():
 
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
 
-                if symb1.value == symb2.value:
+                if bool(symb1 == symb2):
                     idx = jump_to
 
             elif instruction.opcode == "JUMPIFNEQ":
@@ -1530,10 +1751,16 @@ def main():
 
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
 
-                if symb1.value != symb2.value:
+                if bool(symb1 != symb2):
                     idx = jump_to
             elif instruction.opcode == "JUMPIFEQS":
                 label, = instruction.operands
@@ -1550,7 +1777,7 @@ def main():
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFEQS")
 
-                if symb1.value == symb2.value:
+                if bool(symb1 == symb2):
                     idx = jump_to
             elif instruction.opcode == "JUMPIFNEQS":
                 label, = instruction.operands
@@ -1566,12 +1793,15 @@ def main():
                         raise Exceptions.TypeError(
                             "Incompatible types in JUMPIFNEQ")
 
-                if symb1.value != symb2.value:
+                if bool(symb1 != symb2):
                     idx = jump_to
             elif instruction.opcode == "PUSHS":
                 symb, = instruction.operands
                 if isinstance(symb, Types.Var):
                     symb = FManager.get_var(symb)
+                    if symb.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 SManager.push(symb)
             elif instruction.opcode == "POPS":
                 var, = instruction.operands
@@ -1614,8 +1844,14 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not symb1.type.is_string() or not symb2.type.is_string():
                     raise Exceptions.TypeError(
                         "Both operands must be of type string in CONCAT")
@@ -1625,17 +1861,26 @@ def main():
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not symb1.type.is_string():
                     raise Exceptions.TypeError(
                         "Operand must be of type string in STRLEN")
-                var.set_symb(Types.Symb.Int(len(symb1.value)))
+                var.set_symb(Types.Symb.Int(len(symb1.value or "")))
             elif instruction.opcode == "GETCHAR":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not symb1.type.is_string():
                     raise Exceptions.TypeError(
                         "Second operand in GETCHAR must be string")
@@ -1649,10 +1894,19 @@ def main():
             elif instruction.opcode == "SETCHAR":
                 var, symb1, symb2 = instruction.operands
                 var = FManager.get_var(var)
+                if var.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb1, Types.Var):
                     symb1 = FManager.get_var(symb1)
+                    if symb1.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if isinstance(symb2, Types.Var):
                     symb2 = FManager.get_var(symb2)
+                    if symb2.type.is_undef():
+                        raise Exceptions.ValueUndefinedError(
+                            "Var's value is undefined")
                 if not var.type.is_string():
                     raise Exceptions.TypeError(
                         "First operand in SETCHAR must be string")
@@ -1663,11 +1917,13 @@ def main():
                     raise Exceptions.StringOperationError(
                         "Second operand in SETCHAR must be >= 0")
                 if not symb2.type.is_string():
-                    raise Exceptions.StringOperationError(
+                    raise Exceptions.TypeError(
                         "Third operand in SETCHAR must be string")
                 try:
-                    listValue = list(var.value)
-                    listValue[symb1.value] = symb2.value[0]
+                    val1 = deescape_str(var.value)
+                    val2 = deescape_str(symb2.value)
+                    listValue = list(val1)
+                    listValue[symb1.value] = val2[0]
                     var.set_symb(Types.Symb.String("".join(listValue)))
                 except IndexError as e:
                     raise Exceptions.StringOperationError(e)

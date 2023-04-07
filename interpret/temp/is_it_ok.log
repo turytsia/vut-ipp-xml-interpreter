@@ -1,7 +1,7 @@
 Archive:  xturyt00.zip
-  inflating: interpret.py            
   inflating: readme2.md              
   inflating: rozsireni               
+  inflating: interpret.py            
 
 Usage: python interpret.py [-h|--help|OPTIONS]
 
