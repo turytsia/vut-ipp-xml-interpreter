@@ -708,23 +708,7 @@ class Parser:
             """
             if re.search(r"^(int|bool|string|float|nil)$", self.attr) is None:
                 return False
-            try:
-                if self.attr == "int":
-                    assert re.search(
-                        r"^[+-]?\d+$", self.text), "Invalid integer detected"
-                elif self.attr == "bool":
-                    assert re.search(r"^(true|false)$",
-                                     self.text), "Invalid bool detected"
-                elif self.attr == "string":
-                    assert True, ""
-                elif self.attr == "float":
-                    assert True, ""
-                elif self.attr == "nil":
-                    assert re.search(
-                        r"^nil$", self.text), "Invalid nil detected"
-                return True
-            except AssertionError as e:
-                raise Exceptions.XMLUnexpectedError(e)
+            return True
 
     class Var(_GenericParseType):
         """
